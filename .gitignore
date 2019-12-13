@@ -1,0 +1,6 @@
+deps/*
+lit
+luvi
+luvit
+discordia.log
+gateway.json
