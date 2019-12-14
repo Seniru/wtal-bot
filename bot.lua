@@ -27,11 +27,21 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+        elseif msg.content:lower():find('> set%s+name%s+.-#?%d*%s*') then
+            local nick = msg.content:match('> set%s+name%s+(.+#?%d*)%s*')
+            msg.member:setNickname(nick)
+            setRank(msg.member)
+            msg:reply('Successfully set the nickname to ' .. nick .. '!')
         end
     end)
 
     dClient:on('memberJoin', function(member)
-        guild.getChannel(enum.channels.general_chat):send('Hello!')
+        guild.getChannel(enum.channels.general_chat):send('Hello ' .. member.user.mentionString .. '!. Please set your in-game name game using `> set name TRANSFORMICE_USERNAME` command')
+    end)
+
+    dClient:on('memberUpdate', function(member)
+        print('Member Update event fired!')
+        setRank(member)
     end)
 
     getMembers()
@@ -43,10 +53,27 @@ end)()
 function loop()
     changes, updated = fetchChanges(updated)
     updateRanks(changes, updated)
-    -- FIXME: The timeout should be 5 minutes not 2 (bots also need rest)
-    timer.setTimeout(1000*60*2, coroutine.wrap(function()
+    timer.setTimeout(1000*60*5, coroutine.wrap(function()
         loop()
     end))
+end
+
+function setRank(member)
+    print('Setting rank of ' .. member.nickname)
+    for name, rank in next, members do
+        if name:lower():find(member.nickname:lower() .. '#?%d*') then
+            print('Found member mathcing the given instance')
+            print('Removing existing rank')            
+            for role, id in next, enum.roles do
+                if member:hasRole(id) then
+                    member:removeRole(id)
+                end
+            end           
+            print('Adding the new rank \'' .. rank .. '\'')
+            member:addRole(enum.roles[rank])
+            break
+        end
+    end
 end
 
 function getMembers()
