@@ -2,7 +2,7 @@ local discordia = require('discordia')
 local http = require('coro-http')
 local api = require('fromage')
 local timer = require('timer')
-local utils = require('utils')
+local enum = require('enum')
 
 local dClient = discordia.Client({
     cacheAllMembers = true
@@ -12,7 +12,6 @@ local fClient = api()
 local clock = discordia.Clock()
 
 local guild = nil
-local id = 1051168
 local updated = 1574635902000
 local histLogs = {}
 local members = {}
@@ -32,7 +31,7 @@ coroutine.wrap(function()
     end)
 
     dClient:on('memberJoin', function(member)
-        
+        guild.getChannel(enum.channels.general_chat):send('Hello!')
     end)
 
     getMembers()
@@ -53,11 +52,11 @@ end
 function getMembers()
     print('Connecting to members...')
     local page = 1
-    local p1 = fClient.getTribeMembers(id, page)
+    local p1 = fClient.getTribeMembers(enum.id, page)
     print('Fetching members... (total pages:' .. p1._pages .. ')')
     while page <= p1._pages do
         print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
-        for _, member in next, fClient.getTribeMembers(id, page) do
+        for _, member in next, fClient.getTribeMembers(enum.id, page) do
             if (type(member) == 'table') then
                 members[member.name] = member.rank
             end
@@ -65,21 +64,22 @@ function getMembers()
         page = page + 1
     end
     print('Fetching finished!')
-    updated = fClient.getTribeHistory(id)[1].timestamp
+    updated = fClient.getTribeHistory(enum.id)[1].timestamp
     print('Updated all members!')
 end
 
 
 function fetchChanges(till)
+    print('Checking history changes...')
     local page = 1
-    local h1 = fClient.getTribeHistory(id)
+    local h1 = fClient.getTribeHistory(enum.id)
     local hist = {}
     local completed = false
     if h1[1].timestamp > updated then
         print('Detected new changes')
         while not completed do
             print('Fetching page ' .. page .. '...')
-            for _, log in next, fClient.getTribeHistory(id, page) do
+            for _, log in next, fClient.getTribeHistory(enum.id, page) do
                 if type(log) == 'table' then
                     if log.timestamp <= till then
                         print('Fetched new records')
