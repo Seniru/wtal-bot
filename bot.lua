@@ -9,6 +9,7 @@ local dClient = discordia.Client({
 })
 
 local fClient = api()
+local clock = discordia.Clock()
 
 local guild = nil
 local id = 1051168
@@ -16,28 +17,37 @@ local updated = 1574635902000
 local histLogs = {}
 local members = {}
 
-
 coroutine.wrap(function()
     
+    --clock.start()
     print('Logging...')
     fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
     guild = dClient:getGuild('522976111836004353')
 
-    dClient:on('messageCreate', function(msg) 
+    dClient:on('messageCreate', function(msg)
+        --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
         end
     end)
 
+    dClient:on('memberJoin', function(member)
+        
+    end)
+
     getMembers()
     loop()
-    timer.setInterval(1000*60*5, loop)
-
+    
 end)()
+
 
 function loop()
     changes, updated = fetchChanges(updated)
-    updateRanks(changes)
+    updateRanks(changes, updated)
+    -- FIXME: The timeout should be 5 minutes not 2 (bots also need rest)
+    timer.setTimeout(1000*60*2, coroutine.wrap(function()
+        loop()
+    end))
 end
 
 function getMembers()
@@ -86,7 +96,8 @@ function fetchChanges(till)
 end
 
 
-function updateRanks(logs)
+function updateRanks(logs, lastUpdated)
+    if lastUpdated == updated then return end
     print('Queueing members and ranks...')
     local toUpdate = {}
     for _, v in next, logs do
