@@ -26,17 +26,17 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-        elseif msg.content:lower():find('^> set%s+name%s+.-#?%d*%s*') then
+        --[[elseif msg.content:lower():find('^> set%s+name%s+.-#?%d*%s*') then
             local nick = msg.content:match('^> set%s+name%s+(.+#?%d*)%s*')
             msg.member:setNickname(nick)
             setRank(msg.member)
-            msg:reply('Successfully set the nickname to ' .. nick .. '!')
+            msg:reply('Successfully set the nickname to ' .. nick .. '!')]]
         end
     end)
 
-    dClient:on('memberJoin', function(member)
+    --[[dClient:on('memberJoin', function(member)
         guild:getChannel(enum.channels.general_chat):send('Hello ' .. member.user.mentionString .. '!. Please set your in-game name game using `> set name TRANSFORMICE_USERNAME` command')
-    end)
+    end)]]
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
