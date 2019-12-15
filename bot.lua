@@ -34,9 +34,9 @@ coroutine.wrap(function()
         end
     end)
 
-    --[[dClient:on('memberJoin', function(member)
-        guild:getChannel(enum.channels.general_chat):send('Hello ' .. member.user.mentionString .. '!. Please set your in-game name game using `> set name TRANSFORMICE_USERNAME` command')
-    end)]]
+    dClient:on('memberJoin', function(member)
+        guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server! Please tell us your in-game name, thanks in advance!! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧')
+    end)
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
