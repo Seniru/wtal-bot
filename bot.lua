@@ -41,7 +41,9 @@ coroutine.wrap(function()
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
-        setRank(member)
+        if not member:hasRole(enum.roles[members[getStoredName(member.nickname)]]) then
+            setRank(member)
+        end
     end)
 
     getMembers()
@@ -56,6 +58,16 @@ function loop()
     timer.setTimeout(1000*60*5, coroutine.wrap(function()
         loop()
     end))
+end
+
+function getStoredName(name, memberList)
+    memberList = memberList or members
+    for n, r in next, memberList do             
+        if not not n:find(name .. '#?%d*') then
+            return n
+        end
+    end
+    return nil
 end
 
 function setRank(member)
