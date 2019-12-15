@@ -22,13 +22,12 @@ coroutine.wrap(function()
     print('Logging...')
     fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
     guild = dClient:getGuild('522976111836004353')
-
     dClient:on('messageCreate', function(msg)
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-        elseif msg.content:lower():find('> set%s+name%s+.-#?%d*%s*') then
-            local nick = msg.content:match('> set%s+name%s+(.+#?%d*)%s*')
+        elseif msg.content:lower():find('^> set%s+name%s+.-#?%d*%s*') then
+            local nick = msg.content:match('^> set%s+name%s+(.+#?%d*)%s*')
             msg.member:setNickname(nick)
             setRank(msg.member)
             msg:reply('Successfully set the nickname to ' .. nick .. '!')
@@ -36,7 +35,7 @@ coroutine.wrap(function()
     end)
 
     dClient:on('memberJoin', function(member)
-        guild.getChannel(enum.channels.general_chat):send('Hello ' .. member.user.mentionString .. '!. Please set your in-game name game using `> set name TRANSFORMICE_USERNAME` command')
+        guild:getChannel(enum.channels.general_chat):send('Hello ' .. member.user.mentionString .. '!. Please set your in-game name game using `> set name TRANSFORMICE_USERNAME` command')
     end)
 
     dClient:on('memberUpdate', function(member)
@@ -53,9 +52,11 @@ end)()
 
 
 function loop()
-    changes, updated = fetchChanges(updated)
-    updateRanks(changes, updated)
-    timer.setTimeout(1000*60*5, coroutine.wrap(function()
+    changes, updatedTime = fetchChanges(updated)
+    updateRanks(changes, updatedTime)
+    updated = updatedTime
+    --FIXME: Rest should be 5 mins not 1
+    timer.setTimeout(1000*60*1, coroutine.wrap(function()
         loop()
     end))
 end
@@ -83,9 +84,10 @@ function setRank(member)
             end           
             print('Adding the new rank \'' .. rank .. '\'')
             member:addRole(enum.roles[rank])
-            break
+            return
         end
     end
+    member:addRole(enum.roles['Passer by'])
 end
 
 function getMembers()
@@ -147,13 +149,12 @@ function updateRanks(logs, lastUpdated)
             toUpdate[n] = r
         end
     end
-
     print('Updating ranks!')
     for k, v in pairs(guild.members) do
         for n, r in next, toUpdate do
-            print('Updating ' .. n .. '...')
             if v.nickname  and not not n:find(v.nickname .. '#?%d*') then
-                v:addRole('655289933463945246')
+                print('Updating ' .. n .. '...')
+                v:addRole(enum.roles[r] or enum.roles['Passer by'])
                 print('Updated ' .. v.nickname .. '!')
             end
         end
