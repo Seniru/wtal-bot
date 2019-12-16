@@ -20,7 +20,7 @@ coroutine.wrap(function()
     
     --clock.start()
     print('Logging...')
-    fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
+    fClient.connect('Mouseclick1#0000', 'fakebot101')
     guild = dClient:getGuild('522976111836004353')
     dClient:on('messageCreate', function(msg)
         --For testing purposes
@@ -176,4 +176,4 @@ function getRankUpdate(log)
     end    
 end
 
-dClient:run('Bot ' .. os.getenv('DISCORD'))
+dClient:run('Bot NjU0OTg3NDAzODkwNTI0MTYw.XfcFLw.n95CfMoZnB_z0lxEMfG_RRm9xac')
