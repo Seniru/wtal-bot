@@ -1,9 +1,10 @@
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
 local api = require('fromage')
 local timer = require('timer')
-local enum = require('enum')
+local enum = require(test and 'enum-test' or 'enum')
 
 local dClient = discordia.Client({
     cacheAllMembers = true
