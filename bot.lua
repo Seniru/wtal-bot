@@ -58,7 +58,7 @@ function loop()
     updateRanks(changes, updatedTime)
     updated = updatedTime
     --FIXME: Rest should be 5 mins not 1
-    timer.setTimeout(1000*60*1, coroutine.wrap(function()
+    timer.setTimeout((test and 1 or 5) * 1000*60, coroutine.wrap(function()
         loop()
     end))
 end
