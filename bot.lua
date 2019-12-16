@@ -13,7 +13,7 @@ local fClient = api()
 local clock = discordia.Clock()
 
 local guild = nil
-local updated = 1574635902000
+local updated = -1
 local histLogs = {}
 local members = {}
 
@@ -22,7 +22,7 @@ coroutine.wrap(function()
     --clock.start()
     print('Logging...')
     fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
-    guild = dClient:getGuild('522976111836004353')
+    guild = dClient:getGuild(enum.guild)
     dClient:on('messageCreate', function(msg)
         --For testing purposes
         if msg.content:lower() == '> ping' then
@@ -88,7 +88,7 @@ function setRank(member)
             return
         end
     end
-    member:addRole(enum.roles['Passer by'])
+    member:addRole(enum.roles['Passer-by'])
 end
 
 function getMembers()
@@ -155,7 +155,7 @@ function updateRanks(logs, lastUpdated)
         for n, r in next, toUpdate do
             if v.nickname  and not not n:find(v.nickname .. '#?%d*') then
                 print('Updating ' .. n .. '...')
-                v:addRole(enum.roles[r] or enum.roles['Passer by'])
+                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
                 print('Updated ' .. v.nickname .. '!')
             end
         end
@@ -173,7 +173,7 @@ function getRankUpdate(log)
         return log:match('(.-#?%d*) has joined the tribe.'), 'Stooge'
     --Detecting leaves
     elseif log:match('(.-#?%d*) has left the tribe.') then
-        return log:match('(.-#?%d*) has left the tribe'), 'Passer By'
+        return log:match('(.-#?%d*) has left the tribe'), 'Passer-by'
     end    
 end
 
