@@ -1,5 +1,6 @@
 local enum = {
     id = 1051168,
+    guild = '522976111836004353',
     channels = {
         general_chat = '522976112255696896'
     },

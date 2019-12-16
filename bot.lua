@@ -1,10 +1,10 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
 local api = require('fromage')
 local timer = require('timer')
-local enum = require(test and 'enum-test' or 'enum')
+local enum = require(testing and 'enum-test' or 'enum')
 
 local dClient = discordia.Client({
     cacheAllMembers = true
@@ -58,7 +58,7 @@ function loop()
     updateRanks(changes, updatedTime)
     updated = updatedTime
     --FIXME: Rest should be 5 mins not 1
-    timer.setTimeout(1000*60*5, coroutine.wrap(function()
+    timer.setTimeout(1000*60*1, coroutine.wrap(function()
         loop()
     end))
 end
