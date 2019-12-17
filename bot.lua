@@ -42,7 +42,7 @@ coroutine.wrap(function()
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
-        if not member:hasRole(enum.roles[members[getStoredName(member.nickname)]]) then
+        if not member.user.bot and not member:hasRole(enum.roles[members[getStoredName(member.nickname)]] or enum.roles['Passer-by']) then
             setRank(member)
         end
     end)
