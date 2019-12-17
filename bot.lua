@@ -58,7 +58,7 @@ function loop()
     updateRanks(changes, updatedTime)
     updated = updatedTime
     --FIXME: Rest should be 5 mins not 1
-    timer.setTimeout((test and 1 or 5) * 1000*60, coroutine.wrap(function()
+    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
         loop()
     end))
 end
@@ -79,17 +79,22 @@ function setRank(member)
         if name:lower():find(member.nickname:lower() .. '#?%d*') then
             print('Found member mathcing the given instance')
             print('Removing existing rank')            
-            for role, id in next, enum.roles do
-                if member:hasRole(id) then
-                    member:removeRole(id)
-                end
-            end           
+            removeRanks(member)
             print('Adding the new rank \'' .. rank .. '\'')
             member:addRole(enum.roles[rank])
             return
         end
     end
+    removeRanks(member)
     member:addRole(enum.roles['Passer-by'])
+end
+
+function removeRanks(member)
+    for role, id in next, enum.roles do
+        if member:hasRole(id) then
+            member:removeRole(id)
+        end
+    end
 end
 
 function getMembers()
@@ -156,6 +161,7 @@ function updateRanks(logs, lastUpdated)
         for n, r in next, toUpdate do
             if v.nickname  and not not n:find(v.nickname .. '#?%d*') then
                 print('Updating ' .. n .. '...')
+                removeRanks(v)
                 v:addRole(enum.roles[r] or enum.roles['Passer-by'])
                 print('Updated ' .. v.nickname .. '!')
             end
