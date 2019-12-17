@@ -74,6 +74,7 @@ function getStoredName(name, memberList)
 end
 
 function setRank(member)
+    if not member then return end
     print('Setting rank of ' .. member.nickname)
     for name, rank in next, members do
         if name:lower():find(member.nickname:lower() .. '#?%d*') then
