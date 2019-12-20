@@ -28,11 +28,6 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-        --[[elseif msg.content:lower():find('^> set%s+name%s+.-#?%d*%s*') then
-            local nick = msg.content:match('^> set%s+name%s+(.+#?%d*)%s*')
-            msg.member:setNickname(nick)
-            setRank(msg.member)
-            msg:reply('Successfully set the nickname to ' .. nick .. '!')]]
         end
     end)
 
@@ -54,13 +49,17 @@ end)()
 
 
 function loop()
-    changes, updatedTime = fetchChanges(updated)
-    updateRanks(changes, updatedTime)
-    updated = updatedTime
-    --FIXME: Rest should be 5 mins not 1
-    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
-        loop()
-    end))
+    xpcall(function()
+        changes, updatedTime = fetchChanges(updated)
+        updateRanks(changes, updatedTime)
+        updated = updatedTime
+        timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
+            loop()
+        end))
+    end, function(err)
+        print('An error occured: ' .. err)
+        dClient:getGuild('522976111836004353'):getChannel('522976112255696896'):send('An error occured: ' .. err)
+    end)
 end
 
 function getStoredName(name, memberList)
