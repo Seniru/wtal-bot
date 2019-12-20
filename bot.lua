@@ -49,17 +49,15 @@ end)()
 
 
 function loop()
-    xpcall(function()
-        changes, updatedTime = fetchChanges(updated)
-        updateRanks(changes, updatedTime)
-        updated = updatedTime
-        timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
-            loop()
-        end))
-    end, function(err)
-        print('An error occured: ' .. err)
-        dClient:getGuild('522976111836004353'):getChannel('522976112255696896'):send('An error occured: ' .. err)
-    end)
+    changes, updatedTime = fetchChanges(updated)
+    updateRanks(changes, updatedTime)
+    updated = updatedTime
+    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
+        xpcall(loop, function(err)
+            print('An error occured: ' .. err)
+            dClient:getGuild('522976111836004353'):getChannel('522976112255696896'):send('An error occured: ' .. err)
+        end)
+    end))
 end
 
 function getStoredName(name, memberList)
