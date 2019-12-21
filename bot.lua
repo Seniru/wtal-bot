@@ -52,7 +52,7 @@ function loop()
     changes, updatedTime = fetchChanges(updated)
     updateRanks(changes, updatedTime)
     updated = updatedTime
-    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(function()
+    timer.setTimeout((testing and 0.5 or 10) * 1000*60, coroutine.wrap(function()
         loop()
     end))
 end
