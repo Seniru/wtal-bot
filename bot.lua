@@ -50,11 +50,13 @@ end)()
 
 function loop()
     changes, updatedTime = fetchChanges(updated)
+    -- looping again for failed checks
+    if not changes then 
+        return timer.setTimeout(1000*60, coroutine.wrap(loop))
+    end
     updateRanks(changes, updatedTime)
     updated = updatedTime
-    timer.setTimeout((testing and 0.5 or 10) * 1000*60, coroutine.wrap(function()
-        loop()
-    end))
+    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(loop))
 end
 
 function getStoredName(name, memberList)
@@ -116,6 +118,9 @@ function fetchChanges(till)
     print('Checking history changes...')
     local page = 1
     local h1 = fClient.getTribeHistory(enum.id)
+    if not h1[1] or not h1[1].timestamp then
+        return false
+    end
     local hist = {}
     local completed = false
     if h1[1].timestamp > updated then
