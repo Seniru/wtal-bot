@@ -51,7 +51,8 @@ end)()
 function loop()
     changes, updatedTime = fetchChanges(updated)
     -- looping again for failed checks
-    if not changes then 
+    if not changes then
+        print("Unable to connect the forums, trying again in 60 seconds...") 
         return timer.setTimeout(1000*60, coroutine.wrap(loop))
     end
     updateRanks(changes, updatedTime)
