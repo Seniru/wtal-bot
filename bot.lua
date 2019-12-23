@@ -148,7 +148,8 @@ function updateRanks(logs, lastUpdated)
     if lastUpdated == updated then return end
     print('Queueing members and ranks...')
     local toUpdate = {}
-    for _, v in next, logs do
+    for l = #logs, 1, -1 do
+        v = logs[l]
         if getRankUpdate(v) then   
             local n, r = getRankUpdate(v)
             print('Queued ' .. n .. '!')
