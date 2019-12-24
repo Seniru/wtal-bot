@@ -17,6 +17,7 @@ local guild = nil
 local updated = -1
 local histLogs = {}
 local members = {}
+local tries = 5
 
 coroutine.wrap(function()
     
@@ -51,11 +52,18 @@ end)()
 function loop()
     changes, updatedTime = fetchChanges(updated)
     -- looping again for failed checks
-    if not changes then 
+    if not changes then
+        if tries == 0 then
+            print("Connection failed! Restarting!")
+            os.exit(1)
+        end
+        print("Unable to connect the forums, trying again in 60 seconds... (try " .. tries .. " / 5)")
+        tries = tries - 1
         return timer.setTimeout(1000*60, coroutine.wrap(loop))
     end
     updateRanks(changes, updatedTime)
     updated = updatedTime
+    tries = 5
     timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(loop))
 end
 
