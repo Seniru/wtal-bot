@@ -54,7 +54,7 @@ function loop()
     -- looping again for failed checks
     if not changes then
         if tries == 0 then
-            print("Connection failed! Restarting!")
+            print("Connection failed! Restarting...")
             os.exit(1)
         end
         print("Unable to connect the forums, trying again in 60 seconds... (try " .. tries .. " / 5)")
