@@ -1,1 +1,1 @@
-PROJECT_NAME: luvit "bot.lua"
+PROJECT_NAME: ./script.bash
