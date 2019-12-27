@@ -104,7 +104,7 @@ end
 
 function getMembers()
     local hist = fClient.getTribeHistory(enum.id)
-    if not hist[1] or hist[1].timestamp then
+    if not hist[1] or not hist[1].timestamp then
         print("Connection failed! Restarting...")
         os.exit(1)
     end
