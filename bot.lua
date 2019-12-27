@@ -103,6 +103,11 @@ function removeRanks(member)
 end
 
 function getMembers()
+    local hist = fClient.getTribeHistory(enum.id)
+    if not hist[1] or hist[1].timestamp then
+        print("Connection failed! Restarting...")
+        os.exit(1)
+    end
     print('Connecting to members...')
     local page = 1
     local p1 = fClient.getTribeMembers(enum.id, page)
@@ -117,7 +122,7 @@ function getMembers()
         page = page + 1
     end
     print('Fetching finished!')
-    updated = fClient.getTribeHistory(enum.id)[1].timestamp
+    updated = hist[1].timestamp
     print('Updated all members!')
 end
 
