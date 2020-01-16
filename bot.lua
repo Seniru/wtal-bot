@@ -1,4 +1,4 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -38,7 +38,7 @@ coroutine.wrap(function()
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
-        if not member.user.bot and not member:hasRole(enum.roles[members[getStoredName(member.nickname or '')]] or enum.roles['Passer-by']) then
+        if not member.user.bot and not member:hasRole(enum.roles[members[getStoredName(member.name)]] or enum.roles['Passer-by']) then
             setRank(member)
         end
     end)
