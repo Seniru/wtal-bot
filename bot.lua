@@ -1,10 +1,11 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
 local api = require('fromage')
 local timer = require('timer')
 local enum = require(testing and 'enum-test' or 'enum')
+local hi = require('replies')
 
 local dClient = discordia.Client({
     cacheAllMembers = true
@@ -27,8 +28,11 @@ coroutine.wrap(function()
     guild = dClient:getGuild(enum.guild)
     dClient:on('messageCreate', function(msg)
         --For testing purposes
+        local mentioned = msg.mentionedUsers
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+        elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
+            msg:reply(reply(msg.author.mentionString))
         end
     end)
 
@@ -196,6 +200,13 @@ function getRankUpdate(log)
     elseif log:match('(.-#?%d*) has left the tribe.') then
         return log:match('(.-#?%d*) has left the tribe'), 'Passer-by'
     end    
+end
+
+--[[MISC]]
+
+function reply(name)
+    local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
+    return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
 end
 
 dClient:run('Bot ' .. os.getenv('DISCORD'))
