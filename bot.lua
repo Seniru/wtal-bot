@@ -82,10 +82,9 @@ function getStoredName(name, memberList)
 end
 
 function setRank(member)
-    if member.nickname == nil then return end
-    print('Setting rank of ' .. member.nickname)
+    print('Setting rank of ' .. member.name)
     for name, rank in next, members do
-        if name:lower():find(member.nickname:lower() .. '#?%d*') then
+        if name:lower():find(member.name:lower() .. '#?%d*') then
             print('Found member mathcing the given instance')
             print('Removing existing rank')            
             removeRanks(member)
@@ -177,11 +176,11 @@ function updateRanks(logs, lastUpdated)
     print('Updating ranks!')
     for k, v in pairs(guild.members) do
         for n, r in next, toUpdate do
-            if v.nickname  and not not n:find(v.nickname .. '#?%d*') then
+            if not not n:find(v.name .. '#?%d*') then
                 print('Updating ' .. n .. '...')
                 removeRanks(v)
                 v:addRole(enum.roles[r] or enum.roles['Passer-by'])
-                print('Updated ' .. v.nickname .. '!')
+                print('Updated ' .. v.name .. '!')
             end
         end
     end
