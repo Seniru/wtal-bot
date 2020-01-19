@@ -33,6 +33,10 @@ coroutine.wrap(function()
             msg:reply('Pong!')
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             msg:reply(reply(msg.author.mentionString))
+        elseif msg.content:lower() == '> p' then
+            getProfile(msg.member.name, msg)            
+        elseif msg.content:find('> p%s+(.-#?%d*)') then
+            getProfile(msg.content:match("> p%s+(.+#?%d*)"), msg)
         end
     end)
 
@@ -42,7 +46,8 @@ coroutine.wrap(function()
 
     dClient:on('memberUpdate', function(member)
         print('Member Update event fired!')
-        if not member.user.bot and not member:hasRole(enum.roles[members[getStoredName(member.name)]] or enum.roles['Passer-by']) then
+        local stored = members[getStoredName(member.name)]
+        if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
             setRank(member)
         end
     end)
@@ -61,7 +66,7 @@ function loop()
             print("Connection failed! Restarting...")
             os.exit(1)
         end
-        print("Unable to connect the forums, trying again in 60 seconds... (try " .. tries .. " / 5)")
+        print("Unable to connect the forums, trying again in 60 seconds... (tries left: " .. tries .. ")")
         tries = tries - 1
         return timer.setTimeout(1000*60, coroutine.wrap(loop))
     end
@@ -83,7 +88,8 @@ end
 
 function setRank(member)
     print('Setting rank of ' .. member.name)
-    for name, rank in next, members do
+    for name, data in next, members do
+        local rank = data.rank
         if name:lower():find(member.name:lower() .. '#?%d*') then
             print('Found member mathcing the given instance')
             print('Removing existing rank')            
@@ -119,7 +125,7 @@ function getMembers()
         print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
         for _, member in next, fClient.getTribeMembers(enum.id, page) do
             if (type(member) == 'table') then
-                members[member.name] = member.rank
+                members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
             end
         end
         page = page + 1
@@ -169,7 +175,10 @@ function updateRanks(logs, lastUpdated)
         if getRankUpdate(v) then   
             local n, r = getRankUpdate(v)
             print('Queued ' .. n .. '!')
-            members[n] = r
+            if not members[n] then
+                members[n] = {rank=r, joined=os.time(), name=n}
+            end
+            members[n].rank = r
             toUpdate[n] = r
         end
     end
@@ -206,6 +215,49 @@ end
 function reply(name)
     local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
     return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
+end
+
+function getProfile(name, msg)
+    xpcall(function()
+    
+    local mem = members[getStoredName(name)]
+    if not mem then
+        msg:reply("The user is not in the tribe or is not indexed yet!")
+        return
+    end
+
+    local fName = mem.name:sub(1, -6)
+    local disc = mem.name:sub(-4)
+
+    --retrieving html chunk from cfm and atelier801 forums
+    local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
+    --extracting data from html chunk
+    title = cfm:match("«(.+)»")
+    level = cfm:match("<b>Level</b>: (%d+)<br>")
+    outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
+    --retrieving profile data from forums (using fromage)
+    local p = fClient.getProfile(mem.name)
+    --returning the string containing profile data
+    msg.channel:send {
+        embed = {
+            title = name .. "'s Profile",
+            description = 
+                "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
+                "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
+                "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
+                "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
+                "\nLevel: " .. (level or 1) .. 
+                "\nBirthday: " .. (p.birthday or 'NA') .. 
+                "\nLocation: " .. (p.location or 'NA') .. 
+                "\nSoulmate: " .. (p.soulmate or 'NA') ..
+                "\nRegistration date: " .. p.registrationDate ..
+                "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
+                "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
+                "\n[Outfit](" .. outfit .. ")",
+            thumbnail = {url = p.avatarUrl}           
+        }
+    }
+    end, function(err) print("Error occured: " .. err) end)
 end
 
 dClient:run('Bot ' .. os.getenv('DISCORD'))
