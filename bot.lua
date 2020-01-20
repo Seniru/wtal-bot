@@ -27,14 +27,16 @@ coroutine.wrap(function()
     fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
     guild = dClient:getGuild(enum.guild)
     dClient:on('messageCreate', function(msg)
-        --For testing purposes
         local mentioned = msg.mentionedUsers
+        --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             msg:reply(reply(msg.author.mentionString))
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
+        elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
+            getProfile(dClient:getGuild(enum.guild).members:get(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
         end
