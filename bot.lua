@@ -36,7 +36,7 @@ coroutine.wrap(function()
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
-            getProfile(dClient:getGuild(enum.guild).members:get(mentioned.first.id).name, msg)
+            getProfile(dClient:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
         end
@@ -226,7 +226,7 @@ end
 function getProfile(name, msg)
     xpcall(function()
     name = formatName(name)
-    print(name)
+    print('> p ' .. name)
     local mem = members[getStoredName(name)]
     if not mem then
         msg:reply("The user is not in the tribe or is not indexed yet!")
