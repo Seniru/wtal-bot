@@ -33,10 +33,10 @@ coroutine.wrap(function()
             msg:reply('Pong!')
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             msg:reply(reply(msg.author.mentionString))
-        elseif msg.content:lower() == '> p' then
+        elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
-        elseif msg.content:find('> p%s+(.-#?%d*)') then
-            getProfile(msg.content:match("> p%s+(.+#?%d*)"), msg)
+        elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
+            getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
         end
     end)
 
@@ -217,9 +217,13 @@ function reply(name)
     return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
 end
 
+function formatName(name)
+    return name:sub(1, 1):upper() .. name:sub(2):lower()
+end
+
 function getProfile(name, msg)
     xpcall(function()
-    
+    name = formatName(name)
     local mem = members[getStoredName(name)]
     if not mem then
         msg:reply("The user is not in the tribe or is not indexed yet!")
