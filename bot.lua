@@ -226,6 +226,7 @@ end
 function getProfile(name, msg)
     xpcall(function()
     name = formatName(name)
+    print(name)
     local mem = members[getStoredName(name)]
     if not mem then
         msg:reply("The user is not in the tribe or is not indexed yet!")
