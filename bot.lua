@@ -4,6 +4,7 @@ local discordia = require('discordia')
 local http = require('coro-http')
 local api = require('fromage')
 local timer = require('timer')
+local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
 
@@ -212,6 +213,20 @@ function getRankUpdate(log)
     end    
 end
 
+--[[Encode URL
+    copied shamelessly from Lautenschlager-id/ModuleBot
+]]
+local encodeUrl = function(url)
+	local out, counter = {}, 0
+
+	for letter in string.gmatch(url, '.') do
+		counter = counter + 1
+		out[counter] = string.upper(string.format("%02x", string.byte(letter)))
+	end
+
+	return '%' .. table.concat(out, '%')
+end
+
 --[[MISC]]
 
 function reply(name)
@@ -240,6 +255,10 @@ function getProfile(name, msg)
     local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
     --extracting data from html chunk
     title = cfm:match("«(.+)»")
+    title = encodeUrl(title or 'Little mouse')
+    local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
+    title = json.parse(tb)["text"][1]
+    print(title)
     level = cfm:match("<b>Level</b>: (%d+)<br>")
     outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
     --retrieving profile data from forums (using fromage)
