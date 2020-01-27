@@ -2,7 +2,8 @@ local enum = {
     id = 1051168,
     guild = '522976111836004353',
     channels = {
-        general_chat = '522976112255696896'
+        general_chat = '522976112255696896',
+        tribe_chat = '671247948406980621'
     },
     roles = {
         ['Passer-by'] = '655375001708527616',

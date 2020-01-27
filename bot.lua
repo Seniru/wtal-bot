@@ -1,4 +1,4 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -44,8 +44,9 @@ coroutine.wrap(function()
     end)
 
     tfm:on("connectionFailed", function()
-        print("Connection to transformice failed!")
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        print("Connection to transformice failed!\n Trying again")
+        tfm:connect("Mouseclick1#0000", os.getenv('FORUM_PASSWORD'))
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     tfm:on("disconnection", function()
@@ -61,10 +62,14 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
     end)
 
-   
+   tfm:on("tribeMessage", function(member, message)
+        guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
+   end)
+
+
     dClient:once("ready", function()
         guild = dClient:getGuild(enum.guild)
-        print("Connecting tfm bot")
+        print("Starting transformice client...")
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
@@ -73,6 +78,7 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+        -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             msg:reply(reply(msg.author.mentionString))
         elseif msg.content:find("^>%s*p%s*$") then
@@ -81,6 +87,13 @@ coroutine.wrap(function()
             getProfile(dClient:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
+        -- tribe chat
+        elseif msg.channel.id == enum.channels.tribe_chat then
+            _, count = msg.content:gsub("`", "")
+            if msg.content:find("^`.+`$") and count == 2 then
+                local cont = msg.content:gsub("`+", "")
+                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
+            end
         end
     end)
 
