@@ -1,8 +1,9 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
-local api = require('fromage')
+local fromage = require('fromage')
+local transfromage = require('transfromage')
 local timer = require('timer')
 local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
@@ -12,7 +13,8 @@ local dClient = discordia.Client({
     cacheAllMembers = true
 })
 
-local fClient = api()
+local fClient = fromage()
+local tfm = transfromage.client:new()
 local clock = discordia.Clock()
 
 local guild = nil
@@ -23,10 +25,49 @@ local tries = 5
 
 coroutine.wrap(function()
     
-    --clock.start()
-    print('Logging...')
-    fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
-    guild = dClient:getGuild(enum.guild)
+    
+    tfm:once("ready", function()
+        print('Logging into transformice...')
+	    tfm:connect("Mouseclick1#0000", os.getenv('FORUM_PASSWORD'))
+    end)
+    
+    tfm:on("connection", function(name, comm, id, time)
+        print('Logged in successfully!')
+        tfm:sendTribeMessage("Connected to tribe chat!")
+        tfm:joinTribeHouse()
+        -- Rank update process.
+        -- TODO: Improve this with transfromage
+        print('Logging in with forums...')
+        fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
+        getMembers()
+        loop()
+    end)
+
+    tfm:on("connectionFailed", function()
+        print("Connection to transformice failed!")
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+    end)
+
+    tfm:on("disconnection", function()
+        print("disconnected")
+    end)
+
+    tfm:on("tribeMemberConnection", function(member)
+        tfm:sendTribeMessage("Welcome back " .. member .. "!")
+    end)
+
+    tfm:on("newTribeMember", function(member)
+        tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
+        tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
+    end)
+
+   
+    dClient:once("ready", function()
+        guild = dClient:getGuild(enum.guild)
+        print("Connecting tfm bot")
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+    end)
+
     dClient:on('messageCreate', function(msg)
         local mentioned = msg.mentionedUsers
         --For testing purposes
@@ -55,8 +96,6 @@ coroutine.wrap(function()
         end
     end)
 
-    getMembers()
-    loop()
     
 end)()
 
@@ -67,6 +106,7 @@ function loop()
     if not changes then
         if tries == 0 then
             print("Connection failed! Restarting...")
+            tfm:disconnect()
             os.exit(1)
         end
         print("Unable to connect the forums, trying again in 60 seconds... (tries left: " .. tries .. ")")
@@ -118,6 +158,7 @@ function getMembers()
     local hist = fClient.getTribeHistory(enum.id)
     if not hist[1] or not hist[1].timestamp then
         print("Connection failed! Restarting...")
+        tfm:disconnect()
         os.exit(1)
     end
     print('Connecting to members...')
