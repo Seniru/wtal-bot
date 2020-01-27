@@ -22,6 +22,7 @@ local updated = -1
 local histLogs = {}
 local members = {}
 local tries = 5
+local tribeHouseCount = 0
 
 coroutine.wrap(function()
     
@@ -67,14 +68,33 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
     end)
 
-   tfm:on("tribeMessage", function(member, message)
+    tfm:on("tribeMessage", function(member, message)
         guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
-   end)
+    end)
+
+    tfm:on("newPlayer", function(playerData)
+        tribeHouseCount = tribeHouseCount + 1
+        tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
+    end)
+
+    tfm:on("playerLeft", function(playerData)
+        tribeHouseCount = tribeHouseCount - 1
+        if tribeHouseCount == 1 then
+            tfm:loadLua("system.exit()")
+        end
+    end)
+
+    tfm:on("joinTribeHouse", function(tribeName)
+        for k, v in next, tfm.playerList do
+            tribeHouseCount = tribeHouseCount + 1
+        end
+    end)
 
 
     dClient:once("ready", function()
         guild = dClient:getGuild(enum.guild)
         print("Starting transformice client...")
+        tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
