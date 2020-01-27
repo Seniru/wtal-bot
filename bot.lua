@@ -87,6 +87,7 @@ coroutine.wrap(function()
     tfm:on("joinTribeHouse", function(tribeName)
         for k, v in next, tfm.playerList do
             tribeHouseCount = tribeHouseCount + 1
+            print(k)
         end
         print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
     end)
