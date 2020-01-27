@@ -55,6 +55,11 @@ coroutine.wrap(function()
 
     tfm:on("tribeMemberConnection", function(member)
         tfm:sendTribeMessage("Welcome back " .. member .. "!")
+        guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** just connected!")
+    end)
+
+    tfm:on("tribeMemberDisconnection", function(member)
+        guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** has disconnected!")
     end)
 
     tfm:on("newTribeMember", function(member)
