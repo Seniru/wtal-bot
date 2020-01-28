@@ -29,7 +29,7 @@ coroutine.wrap(function()
     
     tfm:once("ready", function()
         print('Logging into transformice...')
-	    tfm:connect("Mouseclick1#0000", os.getenv('FORUM_PASSWORD'))
+	    tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
     end)
     
     tfm:on("connection", function(name, comm, id, time)
@@ -39,14 +39,14 @@ coroutine.wrap(function()
         -- Rank update process.
         -- TODO: Improve this with transfromage
         print('Logging in with forums...')
-        fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
+        fClient.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         --loop()
     end)
 
     tfm:on("connectionFailed", function()
         print("Connection to transformice failed!\n Trying again")
-        tfm:connect("Mouseclick1#0000", os.getenv('FORUM_PASSWORD'))
+        tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
     end)
 
     tfm:on("disconnection", function()
@@ -85,13 +85,13 @@ coroutine.wrap(function()
 
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
-        print("Player joined: (total players: " .. tribeHouseCount) 
+        print("Player joined: (total players: " .. tribeHouseCount .. ")") 
         tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
     end)
 
     tfm:on("playerLeft", function(playerData)
         tribeHouseCount = tribeHouseCount - 1
-        print("Player left: (total players: " .. tribeHouseCount)
+        print("Player left: (total players: " .. tribeHouseCount .. ")")
         if tribeHouseCount == 1 then
             tfm:loadLua("system.exit()")
         end
@@ -102,10 +102,7 @@ coroutine.wrap(function()
     end)
 
     tfm:on("refreshPlayerList", function(playerList)
-        for k, v in next, playerList do
-            tribeHouseCount = tribeHouseCount + 1
-            print(k)
-        end
+        tribeHouseCount = playerList and (playerList.count or 0) or 0
         print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
     end)
 
