@@ -41,13 +41,12 @@ coroutine.wrap(function()
         print('Logging in with forums...')
         fClient.connect('Mouseclick1#0000', os.getenv('FORUM_PASSWORD'))
         getMembers()
-        loop()
+        --loop()
     end)
 
     tfm:on("connectionFailed", function()
         print("Connection to transformice failed!\n Trying again")
         tfm:connect("Mouseclick1#0000", os.getenv('FORUM_PASSWORD'))
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     tfm:on("disconnection", function()
@@ -66,6 +65,18 @@ coroutine.wrap(function()
     tfm:on("newTribeMember", function(member)
         tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
         tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
+        members[member] = {rank='Stooge', joined=os.time(), name=member}
+        setRank(member, true)
+    end)
+
+    tfm:on("tribeMemberLeave", function(member)
+        members[member].rank = 'Passer-by'
+        setRank(member, true)
+    end)
+
+    tfm:on("tribeMemberGetRole", function(member, setter, role)
+        members[member].rank = role
+        setRank(member, true)
     end)
 
     tfm:on("tribeMessage", function(member, message)
@@ -74,24 +85,29 @@ coroutine.wrap(function()
 
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
+        print("Player joined: (total players: " .. tribeHouseCount) 
         tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
     end)
 
     tfm:on("playerLeft", function(playerData)
         tribeHouseCount = tribeHouseCount - 1
+        print("Player left: (total players: " .. tribeHouseCount)
         if tribeHouseCount == 1 then
             tfm:loadLua("system.exit()")
         end
     end)
 
     tfm:on("joinTribeHouse", function(tribeName)
-        for k, v in next, tfm.playerList do
+        tfm:emit("refreshPlayerList")
+    end)
+
+    tfm:on("refreshPlayerList", function(playerList)
+        for k, v in next, playerList do
             tribeHouseCount = tribeHouseCount + 1
             print(k)
         end
         print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
     end)
-
 
     dClient:once("ready", function()
         guild = dClient:getGuild(enum.guild)
@@ -134,13 +150,11 @@ coroutine.wrap(function()
         if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
             setRank(member)
         end
-    end)
-
-    
+    end)   
 end)()
 
 
-function loop()
+--[[function loop()
     changes, updatedTime = fetchChanges(updated)
     -- looping again for failed checks
     if not changes then
@@ -157,7 +171,7 @@ function loop()
     updated = updatedTime
     tries = 5
     timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(loop))
-end
+end]]
 
 function getStoredName(name, memberList)
     memberList = memberList or members
@@ -169,21 +183,33 @@ function getStoredName(name, memberList)
     return nil
 end
 
-function setRank(member)
-    print('Setting rank of ' .. member.name)
-    for name, data in next, members do
-        local rank = data.rank
-        if name:lower():find(member.name:lower() .. '#?%d*') then
-            print('Found member mathcing the given instance')
-            print('Removing existing rank')            
-            removeRanks(member)
-            print('Adding the new rank \'' .. rank .. '\'')
-            member:addRole(enum.roles[rank])
-            return
+function setRank(member, fromTfm)
+    if not fromTfm then
+        print('Setting rank of ' .. member.name)
+        for name, data in next, members do
+            local rank = data.rank
+            if name:lower():find(member.name:lower() .. '#?%d*') then
+                print('Found member mathcing the given instance')
+                print('Removing existing rank')            
+                removeRanks(member)
+                print('Adding the new rank \'' .. rank .. '\'')
+                member:addRole(enum.roles[rank])
+                return
+            end
+        end
+        removeRanks(member)
+        member:addRole(enum.roles['Passer-by'])
+    else
+        print('Setting rank of ' .. member)
+        for k, v in pairs(guild.members) do      
+            if member:find(v.name .. '#?%d*') then
+                print('Updating ' .. member .. '...')
+                removeRanks(v)
+                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
+                print('Updated ' .. v.name .. '!')
+            end
         end
     end
-    removeRanks(member)
-    member:addRole(enum.roles['Passer-by'])
 end
 
 function removeRanks(member)
@@ -195,12 +221,12 @@ function removeRanks(member)
 end
 
 function getMembers()
-    local hist = fClient.getTribeHistory(enum.id)
+    --[[local hist = fClient.getTribeHistory(enum.id)
     if not hist[1] or not hist[1].timestamp then
         print("Connection failed! Restarting...")
         tfm:disconnect()
         os.exit(1)
-    end
+    end]]
     print('Connecting to members...')
     local page = 1
     local p1 = fClient.getTribeMembers(enum.id, page)
@@ -215,12 +241,12 @@ function getMembers()
         page = page + 1
     end
     print('Fetching finished!')
-    updated = hist[1].timestamp
+    --updated = hist[1].timestamp
     print('Updated all members!')
 end
 
 
-function fetchChanges(till)
+--[[function fetchChanges(till)
     print('Checking history changes...')
     local page = 1
     local h1 = fClient.getTribeHistory(enum.id)
@@ -292,7 +318,7 @@ function getRankUpdate(log)
     elseif log:match('(.-#?%d*) has left the tribe.') then
         return log:match('(.-#?%d*) has left the tribe'), 'Passer-by'
     end    
-end
+end]]
 
 --[[Encode URL
     copied shamelessly from Lautenschlager-id/ModuleBot
