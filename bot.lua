@@ -93,7 +93,7 @@ coroutine.wrap(function()
         tribeHouseCount = tribeHouseCount - 1
         print("Player left: (total players: " .. tribeHouseCount .. ")")
         if tribeHouseCount == 1 then
-            tfm:loadLua("system.exit()")
+            tfm:sendCommand("module stop")
         end
     end)
 
