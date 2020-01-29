@@ -150,26 +150,6 @@ coroutine.wrap(function()
     end)   
 end)()
 
-
---[[function loop()
-    changes, updatedTime = fetchChanges(updated)
-    -- looping again for failed checks
-    if not changes then
-        if tries == 0 then
-            print("Connection failed! Restarting...")
-            tfm:disconnect()
-            os.exit(1)
-        end
-        print("Unable to connect the forums, trying again in 60 seconds... (tries left: " .. tries .. ")")
-        tries = tries - 1
-        return timer.setTimeout(1000*60, coroutine.wrap(loop))
-    end
-    updateRanks(changes, updatedTime)
-    updated = updatedTime
-    tries = 5
-    timer.setTimeout((testing and 0.5 or 5) * 1000*60, coroutine.wrap(loop))
-end]]
-
 function getStoredName(name, memberList)
     memberList = memberList or members
     for n, r in next, memberList do             
@@ -241,81 +221,6 @@ function getMembers()
     --updated = hist[1].timestamp
     print('Updated all members!')
 end
-
-
---[[function fetchChanges(till)
-    print('Checking history changes...')
-    local page = 1
-    local h1 = fClient.getTribeHistory(enum.id)
-    if not h1[1] or not h1[1].timestamp then
-        return false
-    end
-    local hist = {}
-    local completed = false
-    if h1[1].timestamp > updated then
-        print('Detected new changes')
-        while not completed do
-            print('Fetching page ' .. page .. '...')
-            for _, log in next, fClient.getTribeHistory(enum.id, page) do
-                if type(log) == 'table' then
-                    if log.timestamp <= till then
-                        print('Fetched new records')
-                        completed = true
-                        break    
-                    end
-                    table.insert(hist, log.log)
-                end
-            end
-            page = page + 1
-        end
-    end
-    return hist, h1[1].timestamp
-end
-
-
-function updateRanks(logs, lastUpdated)
-    if lastUpdated == updated then return end
-    print('Queueing members and ranks...')
-    local toUpdate = {}
-    for l = #logs, 1, -1 do
-        v = logs[l]
-        if getRankUpdate(v) then   
-            local n, r = getRankUpdate(v)
-            print('Queued ' .. n .. '!')
-            if not members[n] then
-                members[n] = {rank=r, joined=os.time(), name=n}
-            end
-            members[n].rank = r
-            toUpdate[n] = r
-        end
-    end
-    print('Updating ranks!')
-    for k, v in pairs(guild.members) do
-        for n, r in next, toUpdate do
-            if not not n:find(v.name .. '#?%d*') then
-                print('Updating ' .. n .. '...')
-                removeRanks(v)
-                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
-                print('Updated ' .. v.name .. '!')
-            end
-        end
-    end
-    print('Updating finished!')
-end
-
-function getRankUpdate(log)
-    --return log:match('.* has changed the rank of (.+#%d+) to (.+)')
-    --Detecting rank changes
-    if log:match('.- has changed the rank of (.-#?%d*) to (.+).') then
-        return log:match('.- has changed the rank of (.-#?%d*) to (.+).')
-    --Detecting joinings
-    elseif log:match('(.-#?%d*) has joined the tribe.') then
-        return log:match('(.-#?%d*) has joined the tribe.'), 'Stooge'
-    --Detecting leaves
-    elseif log:match('(.-#?%d*) has left the tribe.') then
-        return log:match('(.-#?%d*) has left the tribe'), 'Passer-by'
-    end    
-end]]
 
 --[[Encode URL
     copied shamelessly from Lautenschlager-id/ModuleBot
