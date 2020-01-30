@@ -9,11 +9,11 @@ local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
 
-local dClient = discordia.Client({
+local discord = discordia.Client({
     cacheAllMembers = true
 })
 
-local fClient = fromage()
+local forums = fromage()
 local tfm = transfromage.client:new()
 
 local guild = nil
@@ -25,7 +25,8 @@ local tribeHouseCount = 0
 
 coroutine.wrap(function()
     
-    
+    --[[Transfromage events]]
+
     tfm:once("ready", function()
         print('Logging into transformice...')
 	    tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
@@ -36,7 +37,7 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Connected to tribe chat!")
         tfm:joinTribeHouse()
         print('Logging in with forums...')
-        fClient.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         loop()
     end)
@@ -103,14 +104,17 @@ coroutine.wrap(function()
         print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
     end)
 
-    dClient:once("ready", function()
-        guild = dClient:getGuild(enum.guild)
+
+    --[[ Discord events]]
+
+    discord:once("ready", function()
+        guild = discord:getGuild(enum.guild)
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
-    dClient:on('messageCreate', function(msg)
+    discord:on('messageCreate', function(msg)
         local mentioned = msg.mentionedUsers
         --For testing purposes
         if msg.content:lower() == '> ping' then
@@ -121,7 +125,7 @@ coroutine.wrap(function()
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
-            getProfile(dClient:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
+            getProfile(discord:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
         -- tribe chat
@@ -134,11 +138,11 @@ coroutine.wrap(function()
         end
     end)
 
-    dClient:on('memberJoin', function(member)
+    discord:on('memberJoin', function(member)
         guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server! Please tell us your in-game name, thanks in advance!! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧')
     end)
 
-    dClient:on('memberUpdate', function(member)
+    discord:on('memberUpdate', function(member)
         print('Member Update event fired!')
         local stored = members[getStoredName(member.name)]
         if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
@@ -146,6 +150,7 @@ coroutine.wrap(function()
         end
     end)   
 end)()
+
 
 function getStoredName(name, memberList)
     memberList = memberList or members
@@ -195,27 +200,19 @@ function removeRanks(member)
 end
 
 function getMembers()
-    --[[local hist = fClient.getTribeHistory(enum.id)
-    if not hist[1] or not hist[1].timestamp then
-        print("Connection failed! Restarting...")
-        tfm:disconnect()
-        os.exit(1)
-    end]]
     print('Connecting to members...')
     local page = 1
-    local p1 = fClient.getTribeMembers(enum.id, page)
+    local p1 = forums.getTribeMembers(enum.id, page)
     print('Fetching members... (total pages:' .. p1._pages .. ')')
     while page <= p1._pages do
         print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
-        for _, member in next, fClient.getTribeMembers(enum.id, page) do
+        for _, member in next, forums.getTribeMembers(enum.id, page) do
             if (type(member) == 'table') then
                 members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
             end
         end
         page = page + 1
     end
-    print('Fetching finished!')
-    --updated = hist[1].timestamp
     print('Updated all members!')
 end
 
@@ -237,7 +234,7 @@ function encodeUrl(url)
 end
 
 function loop()
-    fClient.getTribeHistory(enum.id)
+    forums.getTribeHistory(enum.id)
     timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
 end
 
@@ -252,49 +249,49 @@ end
 
 function getProfile(name, msg)
     xpcall(function()
-    name = formatName(name)
-    print('> p ' .. name)
-    local mem = members[getStoredName(name)]
-    if not mem then
-        msg:reply("The user is not in the tribe or is not indexed yet!")
-        return
-    end
+        name = formatName(name)
+        print('> p ' .. name)
+        local mem = members[getStoredName(name)]
+        if not mem then
+            msg:reply("The user is not in the tribe or is not indexed yet!")
+            return
+        end
 
-    local fName = mem.name:sub(1, -6)
-    local disc = mem.name:sub(-4)
+        local fName = mem.name:sub(1, -6)
+        local disc = mem.name:sub(-4)
 
-    --retrieving html chunk from cfm and atelier801 forums
-    local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
-    --extracting data from html chunk
-    title = cfm:match("«(.+)»")
-    title = encodeUrl(title or 'Little mouse')
-    local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
-    title = json.parse(tb)["text"][1]
-    level = cfm:match("<b>Level</b>: (%d+)<br>")
-    outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
-    --retrieving profile data from forums (using fromage)
-    local p = fClient.getProfile(mem.name)
-    --returning the string containing profile data
-    msg.channel:send {
-        embed = {
-            title = name .. "'s Profile",
-            description = 
-                "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
-                "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
-                "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
-                "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
-                "\nLevel: " .. (level or 1) .. 
-                "\nBirthday: " .. (p.birthday or 'NA') .. 
-                "\nLocation: " .. (p.location or 'NA') .. 
-                "\nSoulmate: " .. (p.soulmate or 'NA') ..
-                "\nRegistration date: " .. p.registrationDate ..
-                "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
-                "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                "\n[Outfit](" .. outfit .. ")",
-            thumbnail = {url = p.avatarUrl}           
+        --retrieving html chunk from cfm and atelier801 forums
+        local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
+        --extracting data from html chunk
+        title = cfm:match("«(.+)»")
+        title = encodeUrl(title or 'Little mouse')
+        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
+        title = json.parse(tb)["text"][1]
+        level = cfm:match("<b>Level</b>: (%d+)<br>")
+        outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
+        --retrieving profile data from forums (using fromage)
+        local p = forums.getProfile(mem.name)
+        --returning the string containing profile data
+        msg.channel:send {
+            embed = {
+                title = name .. "'s Profile",
+                description = 
+                    "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
+                    "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
+                    "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
+                    "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
+                    "\nLevel: " .. (level or 1) .. 
+                    "\nBirthday: " .. (p.birthday or 'NA') .. 
+                    "\nLocation: " .. (p.location or 'NA') .. 
+                    "\nSoulmate: " .. (p.soulmate or 'NA') ..
+                    "\nRegistration date: " .. p.registrationDate ..
+                    "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
+                    "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
+                    "\n[Outfit](" .. outfit .. ")",
+                thumbnail = {url = p.avatarUrl}           
+            }
         }
-    }
     end, function(err) print("Error occured: " .. err) end)
 end
 
-dClient:run('Bot ' .. os.getenv('DISCORD'))
+discord:run('Bot ' .. os.getenv('DISCORD'))
