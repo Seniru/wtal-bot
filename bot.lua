@@ -136,7 +136,7 @@ coroutine.wrap(function()
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
         -- online users
         elseif msg.content:find("^>%s*who%s*$") then
-            printOnlineUsers("tfm")
+            printOnlineUsers("tfm", msg.channel)
         -- tribe chat
         elseif msg.channel.id == enum.channels.tribe_chat then
             _, count = msg.content:gsub("`", "")
@@ -304,29 +304,36 @@ function getProfile(name, msg)
 end
 
 function printOnlineUsers(from, target)
-    local res = "Online members from " ..  (from == "tfm" and "transformice" or "discord") .. ": "
+    local res = ""
     if from == "tfm" then
-        print(res)
         -- iterating through all online members in transformice
         for name, _ in next, onlineMembers do
-            print(name)
+            res = res .. "\n• ".. name
         end
-    elseif from == "discord" then
-        -- iterating through all the members in discord
-        for id, member in pairs(guild.members) do
-            
-            if member and member.name and (not member.user.bot) and (not member.status == "offline") then
-                res = res .. member.name .. ", "
-                print(member.name .. ": " .. member.status)
-            end
+        
+        target:send {
+            embed = {
+                title = "Online members from transformice",
+                description = res == "" and "Nobody is online right now!" or res
+            }
+        }
 
+    elseif from == "discord" then
+        local totalCount = 0
+        -- iterating through all the members in discord
+        tfm:sendWhisper(target, "Online members from disord: ")
+        for id, member in pairs(guild.members) do
+            if member ~= nil and member.name ~= nil and not member.user.bot and member.status ~= "offline" then
+                res = res .. member.name .. ", "
+                totalCount = totalCount + 1
+            end
             if res:len() > 230 then
-                tfm:sendWhisper(target, res)
+                tfm:sendWhisper(target, res:sub(1, -3))
                 res = ""
             end
-
         end
-        tfm:sendWhisper(target, res)
+        tfm:sendWhisper(target, total == 0 and "Nobody is online right now" or res:sub(1, -3))
+        tfm:sendWhisper(target, "Total members: " .. totalCount .. " (Ingame member list is accessible with the tribe menu)")
     end
 end
 
