@@ -67,7 +67,7 @@ coroutine.wrap(function()
     tfm:on("tribeMemberDisconnection", function(member)
         guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** has disconnected!")
         onlineMembers[member] = nil
-        onlineCount = onlineCount - 1
+        onlineCount = (onlineCount - 1 < 0) and 0 or onlineCount - 1
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
 
@@ -84,7 +84,7 @@ coroutine.wrap(function()
     tfm:on("tribeMemberLeave", function(member)
         members[member].rank = 'Passer-by'
         setRank(member, true)
-        onlineCount = onlineCount - 1
+        onlineCount = (onlineCount - 1 < 0) and 0 or onlineCount - 1
         totalMembers = totalMembers - 1
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
