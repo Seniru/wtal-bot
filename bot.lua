@@ -20,8 +20,12 @@ local guild = nil
 local updated = -1
 local histLogs = {}
 local members = {}
-local onlineMembers = {}
+local onlineMembers = {
+    ["Wtal#5272"] = true
+}
 local tribeHouseCount = 0
+local onlineCount = 1
+local totalMembers = 0
 
 coroutine.wrap(function()
     
@@ -39,6 +43,7 @@ coroutine.wrap(function()
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
+        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
         loop()
     end)
 
@@ -55,11 +60,15 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Welcome back " .. member .. "!")
         guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** just connected!")
         onlineMembers[member] = true
+        onlineCount = onlineCount + 1
+        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
 
     tfm:on("tribeMemberDisconnection", function(member)
         guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** has disconnected!")
         onlineMembers[member] = nil
+        onlineCount = onlineCount - 1
+        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
 
     tfm:on("newTribeMember", function(member)
@@ -67,11 +76,17 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
         members[member] = {rank='Stooge', joined=os.time(), name=member}
         setRank(member, true)
+        onlineCount = onlineCount + 1
+        totalMembers = totalMembers + 1
+        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
 
     tfm:on("tribeMemberLeave", function(member)
         members[member].rank = 'Passer-by'
         setRank(member, true)
+        onlineCount = onlineCount - 1
+        totalMembers = totalMembers - 1
+        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
     end)
 
     tfm:on("tribeMemberGetRole", function(member, setter, role)
@@ -218,6 +233,7 @@ function getMembers()
         for _, member in next, forums.getTribeMembers(enum.id, page) do
             if (type(member) == 'table') then
                 members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
+                totalMembers = totalMembers + 1
             end
         end
         page = page + 1
