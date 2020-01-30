@@ -20,7 +20,7 @@ local guild = nil
 local updated = -1
 local histLogs = {}
 local members = {}
-local tries = 5
+local onlineMembers = {}
 local tribeHouseCount = 0
 
 coroutine.wrap(function()
@@ -54,10 +54,12 @@ coroutine.wrap(function()
     tfm:on("tribeMemberConnection", function(member)
         tfm:sendTribeMessage("Welcome back " .. member .. "!")
         guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** just connected!")
+        onlineMembers[member] = true
     end)
 
     tfm:on("tribeMemberDisconnection", function(member)
         guild:getChannel(enum.channels.tribe_chat):send("> **" .. member .. "** has disconnected!")
+        onlineMembers[member] = nil
     end)
 
     tfm:on("newTribeMember", function(member)
@@ -78,7 +80,11 @@ coroutine.wrap(function()
     end)
 
     tfm:on("tribeMessage", function(member, message)
-        guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
+        if message == "!who" then
+            printOnlineUsers("discord", member)
+        else
+            guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
+        end
     end)
 
     tfm:on("newPlayer", function(playerData)
@@ -128,6 +134,9 @@ coroutine.wrap(function()
             getProfile(discord:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
+        -- online users
+        elseif msg.content:find("^>%s*who%s*$") then
+            printOnlineUsers("tfm")
         -- tribe chat
         elseif msg.channel.id == enum.channels.tribe_chat then
             _, count = msg.content:gsub("`", "")
@@ -292,6 +301,33 @@ function getProfile(name, msg)
             }
         }
     end, function(err) print("Error occured: " .. err) end)
+end
+
+function printOnlineUsers(from, target)
+    local res = "Online members from " ..  (from == "tfm" and "transformice" or "discord") .. ": "
+    if from == "tfm" then
+        print(res)
+        -- iterating through all online members in transformice
+        for name, _ in next, onlineMembers do
+            print(name)
+        end
+    elseif from == "discord" then
+        -- iterating through all the members in discord
+        for id, member in pairs(guild.members) do
+            
+            if member and member.name and not member.user.bot and not member.status == "offline" then
+                res = res .. member.name .. ", "
+                --print(member.name .. ": " .. member.status)
+            end
+
+            if res:len() > 230 then
+                tfm:sendWhisper(target, res)
+                res = ""
+            end
+
+        end
+        tfm:sendWhisper(target, res)
+    end
 end
 
 discord:run('Bot ' .. os.getenv('DISCORD'))
