@@ -15,7 +15,6 @@ local dClient = discordia.Client({
 
 local fClient = fromage()
 local tfm = transfromage.client:new()
-local clock = discordia.Clock()
 
 local guild = nil
 local updated = -1
@@ -36,12 +35,10 @@ coroutine.wrap(function()
         print('Logged in successfully!')
         tfm:sendTribeMessage("Connected to tribe chat!")
         tfm:joinTribeHouse()
-        -- Rank update process.
-        -- TODO: Improve this with transfromage
         print('Logging in with forums...')
         fClient.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
-        --loop()
+        loop()
     end)
 
     tfm:on("connectionFailed", function()
@@ -222,10 +219,13 @@ function getMembers()
     print('Updated all members!')
 end
 
+
+--[[MISC]]
+
 --[[Encode URL
     copied shamelessly from Lautenschlager-id/ModuleBot
 ]]
-local encodeUrl = function(url)
+function encodeUrl(url)
 	local out, counter = {}, 0
 
 	for letter in string.gmatch(url, '.') do
@@ -236,7 +236,10 @@ local encodeUrl = function(url)
 	return '%' .. table.concat(out, '%')
 end
 
---[[MISC]]
+function loop()
+    fClient.getTribeHistory(enum.id)
+    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
+end
 
 function reply(name)
     local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
@@ -267,7 +270,6 @@ function getProfile(name, msg)
     title = encodeUrl(title or 'Little mouse')
     local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
     title = json.parse(tb)["text"][1]
-    print(title)
     level = cfm:match("<b>Level</b>: (%d+)<br>")
     outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
     --retrieving profile data from forums (using fromage)
