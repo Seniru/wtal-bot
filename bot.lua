@@ -315,9 +315,9 @@ function printOnlineUsers(from, target)
         -- iterating through all the members in discord
         for id, member in pairs(guild.members) do
             
-            if member and member.name and not member.user.bot and not member.status == "offline" then
+            if member and member.name and (not member.user.bot) and (not member.status == "offline") then
                 res = res .. member.name .. ", "
-                --print(member.name .. ": " .. member.status)
+                print(member.name .. ": " .. member.status)
             end
 
             if res:len() > 230 then
