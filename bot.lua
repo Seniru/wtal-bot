@@ -1,13 +1,11 @@
 local testing = false
 --Depenendencies--
 local discordia = require('discordia')
-local transfromage = require('transfromage')
-local fromage = require('fromage')
-
 local http = require('coro-http')
+local fromage = require('fromage')
+local transfromage = require('transfromage')
 local timer = require('timer')
 local json = require('json')
-
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
 
@@ -19,13 +17,15 @@ local forums = fromage()
 local tfm = transfromage.client:new()
 
 local guild = nil
+local updated = -1
+local histLogs = {}
+local members = {}
+local onlineMembers = {
+    ["Wtal#5272"] = true
+}
 local tribeHouseCount = 0
 local onlineCount = 1
 local totalMembers = 0
-local members = {}
-local onlineMembers = {
-	["Wtal#5272"] = true
-}
 
 coroutine.wrap(function()
     
@@ -143,20 +143,23 @@ coroutine.wrap(function()
 
     discord:on('messageCreate', function(msg)
         local mentioned = msg.mentionedUsers
-        if msg.content:lower() == '> ping' then --For testing purposes
+        --For testing purposes
+        if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-        elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then -- bot mentions
+        -- profile command
+        elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             msg:reply(reply(msg.author.mentionString))
-		-- profile command
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
             getProfile(discord:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
             getProfile(msg.content:match("^>%s*p%s+(.+#?%d*)%s*$"), msg)
-        elseif msg.content:find("^>%s*who%s*$") then -- online users
+        -- online users
+        elseif msg.content:find("^>%s*who%s*$") then
             printOnlineUsers("tfm", msg.channel)
-        elseif msg.channel.id == enum.channels.tribe_chat then -- tribe chat
+        -- tribe chat
+        elseif msg.channel.id == enum.channels.tribe_chat then
             _, count = msg.content:gsub("`", "")
             if msg.content:find("^`.+`$") and count == 2 then
                 local cont = msg.content:gsub("`+", "")
@@ -179,7 +182,7 @@ coroutine.wrap(function()
 end)()
 
 
-local getStoredName = function(name, memberList)
+function getStoredName(name, memberList)
     memberList = memberList or members
     for n, r in next, memberList do             
         if not not n:find(name .. '#?%d*') then
@@ -189,7 +192,7 @@ local getStoredName = function(name, memberList)
     return nil
 end
 
-local setRank = function(member, fromTfm)
+function setRank(member, fromTfm)
     if not fromTfm then
         print('Setting rank of ' .. member.name)
         for name, data in next, members do
@@ -218,7 +221,7 @@ local setRank = function(member, fromTfm)
     end
 end
 
-local removeRanks = function(member)
+function removeRanks(member)
     for role, id in next, enum.roles do
         if member:hasRole(id) then
             member:removeRole(id)
@@ -226,7 +229,7 @@ local removeRanks = function(member)
     end
 end
 
-local getMembers = function()
+function getMembers()
     print('Connecting to members...')
     local page = 1
     local p1 = forums.getTribeMembers(enum.id, page)
@@ -250,7 +253,7 @@ end
 --[[Encode URL
     copied shamelessly from Lautenschlager-id/ModuleBot
 ]]
-local encodeUrl = function(url)
+function encodeUrl(url)
 	local out, counter = {}, 0
 
 	for letter in string.gmatch(url, '.') do
@@ -261,21 +264,21 @@ local encodeUrl = function(url)
 	return '%' .. table.concat(out, '%')
 end
 
-local loop = function()
+function loop()
     forums.getTribeHistory(enum.id)
     timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
 end
 
-local reply = function(name)
+function reply(name)
     local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
     return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
 end
 
-local formatName = function(name)
+function formatName(name)
     return name:sub(1, 1):upper() .. name:sub(2):lower()
 end
 
-local getProfile = function(name, msg)
+function getProfile(name, msg)
     xpcall(function()
         name = formatName(name)
         print('> p ' .. name)
@@ -306,12 +309,12 @@ local getProfile = function(name, msg)
                 description = 
                     "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
                     "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
-                    mem.joined and ("\nMember since: " .. os.date('%d-%m-%Y %H:%M', mem.joined)) or "" .. 
-                    "\nGender: " .. ({"None", "Female", "Male"})[(p.gender or 0) + 1] .. 
+                    "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
+                    "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
                     "\nLevel: " .. (level or 1) .. 
-                    p.birthday and ("\nBirthday: " .. p.birthday) or "" .. 
-                    p.location and ("\nLocation: " .. p.location) or "" .. 
-                    p.soulmate and ("\nSoulmate: " .. p.soulmate) or "" ..
+                    "\nBirthday: " .. (p.birthday or 'NA') .. 
+                    "\nLocation: " .. (p.location or 'NA') .. 
+                    "\nSoulmate: " .. (p.soulmate or 'NA') ..
                     "\nRegistration date: " .. p.registrationDate ..
                     "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
@@ -322,7 +325,7 @@ local getProfile = function(name, msg)
     end, function(err) print("Error occured: " .. err) end)
 end
 
-local printOnlineUsers = function(from, target)
+function printOnlineUsers(from, target)
     local res = ""
     if from == "tfm" then
         -- iterating through all online members in transformice
@@ -351,7 +354,7 @@ local printOnlineUsers = function(from, target)
                 res = ""
             end
         end
-        (res:len() > 3) and tfm:sendWhisper(target, total == 0 and "Nobody is online right now" or res:sub(1, -3))
+        tfm:sendWhisper(target, total == 0 and "Nobody is online right now" or res:sub(1, -3))
         tfm:sendWhisper(target, "Total members: " .. totalCount .. " (Ingame member list is accessible with the tribe menu)")
     end
 end
