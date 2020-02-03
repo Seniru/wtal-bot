@@ -312,7 +312,7 @@ local getProfile = function(name, msg)
                     p.birthday and ("\nBirthday: " .. p.birthday) or "" .. 
                     p.location and ("\nLocation: " .. p.location) or "" .. 
                     p.soulmate and ("\nSoulmate: " .. p.soulmate) or "" ..
-                    ("\nRegistration date: " .. p.registrationDate ..
+                    "\nRegistration date: " .. p.registrationDate ..
                     "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
                     "\n[Outfit](" .. outfit .. ")",
