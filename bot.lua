@@ -140,7 +140,8 @@ coroutine.wrap(function()
        -- tfm:handlePlayers(true)
         --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
 for id, member in pairs(guild.members) do
-member:addRole(677867246319566849 )
+print(member.name)
+member:addRole(677867246319566849)
 end
     end)
 
