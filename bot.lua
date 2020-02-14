@@ -142,7 +142,7 @@ coroutine.wrap(function()
 for id, member in pairs(guild.members) do
 print(member)
 print(id)
---member:addRole(677867246319566849)
+member:addRole(677867246319566849)
 end
     end)
 
