@@ -137,11 +137,8 @@ coroutine.wrap(function()
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
         print("Starting transformice client...")
-       -- tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-for id, member in next, guild.members do
-member:addRole(677867246319566849 )
-end
+        tfm:handlePlayers(true)
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
@@ -175,13 +172,13 @@ end
         guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server! Please tell us your in-game name, thanks in advance!! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧')
     end)
 
-    --[[discord:on('memberUpdate', function(member)
+    discord:on('memberUpdate', function(member)
         print('Member Update event fired!')
         local stored = members[getStoredName(member.name)]
         if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
             setRank(member)
         end
-    end) ]]  
+    end)   
 end)()
 
 
