@@ -182,7 +182,7 @@ coroutine.wrap(function()
 end)()
 
 
-function getStoredName(name, memberList)
+local getStoredName = function(name, memberList)
     memberList = memberList or members
     for n, r in next, memberList do             
         if not not n:find(name .. '#?%d*') then
@@ -192,7 +192,7 @@ function getStoredName(name, memberList)
     return nil
 end
 
-function setRank(member, fromTfm)
+local setRank = function(member, fromTfm)
     if not fromTfm then
         print('Setting rank of ' .. member.name)
         for name, data in next, members do
@@ -221,7 +221,7 @@ function setRank(member, fromTfm)
     end
 end
 
-function removeRanks(member)
+local removeRanks = function(member)
     for role, id in next, enum.roles do
         if member:hasRole(id) then
             member:removeRole(id)
@@ -229,7 +229,7 @@ function removeRanks(member)
     end
 end
 
-function getMembers()
+local getMembers = function()
     print('Connecting to members...')
     local page = 1
     local p1 = forums.getTribeMembers(enum.id, page)
@@ -253,7 +253,7 @@ end
 --[[Encode URL
     copied shamelessly from Lautenschlager-id/ModuleBot
 ]]
-function encodeUrl(url)
+local encodeUrl = function(url)
 	local out, counter = {}, 0
 
 	for letter in string.gmatch(url, '.') do
@@ -264,21 +264,21 @@ function encodeUrl(url)
 	return '%' .. table.concat(out, '%')
 end
 
-function loop()
+local loop = function()
     forums.getTribeHistory(enum.id)
     timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
 end
 
-function reply(name)
+local reply = function(name)
     local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
     return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
 end
 
-function formatName(name)
+local formatName = function(name)
     return name:sub(1, 1):upper() .. name:sub(2):lower()
 end
 
-function getProfile(name, msg)
+local getProfile = function(name, msg)
     xpcall(function()
         name = formatName(name)
         print('> p ' .. name)
@@ -325,7 +325,7 @@ function getProfile(name, msg)
     end, function(err) print("Error occured: " .. err) end)
 end
 
-function printOnlineUsers(from, target)
+local printOnlineUsers = function(from, target)
     local res = ""
     if from == "tfm" then
         -- iterating through all online members in transformice
