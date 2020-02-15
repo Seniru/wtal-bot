@@ -330,7 +330,7 @@ coroutine.wrap(function()
         if playerList and updated then
             print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
             for name, data in next, playerList do
-                if not onlineMembers[name] and type(name) == "string" and name:find("#%d+") then
+                if (not onlineMembers[name]) and members[name] then
                     onlineCount = onlineCount + 1
                     onlineMembers[name] = true
                     discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
