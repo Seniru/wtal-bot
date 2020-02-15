@@ -223,7 +223,6 @@ coroutine.wrap(function()
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
-        loop()
     end)
 
     tfm:on("connectionFailed", function()
