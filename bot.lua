@@ -27,6 +27,11 @@ local tribeHouseCount = 0
 local onlineCount = 1
 local totalMembers = 0
 
+local loop = function()
+    forums.getTribeHistory(enum.id)
+    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
+end
+
 local getStoredName = function(name, memberList)
     memberList = memberList or members
     for n, r in next, memberList do             
@@ -35,6 +40,14 @@ local getStoredName = function(name, memberList)
         end
     end
     return nil
+end
+
+local removeRanks = function(member)
+    for role, id in next, enum.roles do
+        if member:hasRole(id) then
+            member:removeRole(id)
+        end
+    end
 end
 
 local setRank = function(member, fromTfm)
@@ -66,13 +79,6 @@ local setRank = function(member, fromTfm)
     end
 end
 
-local removeRanks = function(member)
-    for role, id in next, enum.roles do
-        if member:hasRole(id) then
-            member:removeRole(id)
-        end
-    end
-end
 
 local getMembers = function()
     print('Connecting to members...')
@@ -101,11 +107,6 @@ local encodeUrl = function(url)
 	end
 
 	return '%' .. table.concat(out, '%')
-end
-
-local loop = function()
-    forums.getTribeHistory(enum.id)
-    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
 end
 
 local reply = function(name)
@@ -281,6 +282,11 @@ coroutine.wrap(function()
     tfm:on("tribeMemberGetRole", function(member, setter, role)
         members[member].rank = role
         setRank(member, true)
+        if not onlineMembers[member] then
+            onlineCount = onlineCount + 1
+            onlineMembers[member] = true
+            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        end
     end)
 
     tfm:on("tribeMessage", function(member, message)
@@ -289,12 +295,22 @@ coroutine.wrap(function()
         else
             guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
         end
+        if not onlineMembers[member] then
+            onlineCount = onlineCount + 1
+            onlineMembers[member] = true
+            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        end
     end)
 
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
         print("Player joined: (total players: " .. tribeHouseCount .. ")") 
         tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
+        if not onlineMembers[playerData.playerName] and members[playerData.playerName] then
+            onlineCount = onlineCount + 1
+            onlineMembers[playerData.playerName] = true
+            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        end
     end)
 
     tfm:on("playerLeft", function(playerData)
@@ -302,6 +318,11 @@ coroutine.wrap(function()
         print("Player left: (total players: " .. tribeHouseCount .. ")")
         if tribeHouseCount == 1 then
             tfm:sendCommand("module stop")
+        end
+        if not onlineMembers[playerData.playerName] then
+            onlineCount = onlineCount + 1
+            onlineMembers[playerData.playerName] = true
+            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
         end
     end)
 
