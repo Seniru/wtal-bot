@@ -300,7 +300,7 @@ coroutine.wrap(function()
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
         print("Player joined: (total players: " .. tribeHouseCount .. ")") 
-        updated and tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
+        if updated then tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!") end
         if not onlineMembers[playerData.playerName] and members[playerData.playerName] then
             onlineCount = onlineCount + 1
             onlineMembers[playerData.playerName] = true
