@@ -300,7 +300,7 @@ coroutine.wrap(function()
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
         print("Player joined: (total players: " .. tribeHouseCount .. ")") 
-        tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
+        updated and tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!")
         if not onlineMembers[playerData.playerName] and members[playerData.playerName] then
             onlineCount = onlineCount + 1
             onlineMembers[playerData.playerName] = true
@@ -313,11 +313,6 @@ coroutine.wrap(function()
         print("Player left: (total players: " .. tribeHouseCount .. ")")
         if tribeHouseCount == 1 then
             tfm:sendCommand("module stop")
-        end
-        if not onlineMembers[playerData.playerName] then
-            onlineCount = onlineCount + 1
-            onlineMembers[playerData.playerName] = true
-            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
         end
     end)
 
