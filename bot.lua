@@ -1,4 +1,4 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -26,6 +26,190 @@ local onlineMembers = {
 local tribeHouseCount = 0
 local onlineCount = 1
 local totalMembers = 0
+
+local getStoredName = function(name, memberList)
+    memberList = memberList or members
+    for n, r in next, memberList do             
+        if not not n:find(name .. '#?%d*') then
+            return n
+        end
+    end
+    return nil
+end
+
+local setRank = function(member, fromTfm)
+    if not fromTfm then
+        print('Setting rank of ' .. member.name)
+        for name, data in next, members do
+            local rank = data.rank
+            if name:lower():find(member.name:lower() .. '#?%d*') then
+                print('Found member mathcing the given instance')
+                print('Removing existing rank')            
+                removeRanks(member)
+                print('Adding the new rank \'' .. rank .. '\'')
+                member:addRole(enum.roles[rank])
+                return
+            end
+        end
+        removeRanks(member)
+        member:addRole(enum.roles['Passer-by'])
+    else
+        print('Setting rank of ' .. member)
+        for k, v in pairs(guild.members) do      
+            if member:find(v.name .. '#?%d*') then
+                print('Updating ' .. member .. '...')
+                removeRanks(v)
+                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
+                print('Updated ' .. v.name .. '!')
+            end
+        end
+    end
+end
+
+local removeRanks = function(member)
+    for role, id in next, enum.roles do
+        if member:hasRole(id) then
+            member:removeRole(id)
+        end
+    end
+end
+
+local getMembers = function()
+    print('Connecting to members...')
+    local page = 1
+    local p1 = forums.getTribeMembers(enum.id, page)
+    print('Fetching members... (total pages:' .. p1._pages .. ')')
+    while page <= p1._pages do
+        print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
+        for _, member in next, forums.getTribeMembers(enum.id, page) do
+            if (type(member) == 'table') then
+                members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
+                totalMembers = totalMembers + 1
+            end
+        end
+        page = page + 1
+    end
+    print('Updated all members!')
+end
+
+
+--[[MISC]]
+
+--[[Encode URL
+    copied shamelessly from Lautenschlager-id/ModuleBot
+]]
+local encodeUrl = function(url)
+	local out, counter = {}, 0
+
+	for letter in string.gmatch(url, '.') do
+		counter = counter + 1
+		out[counter] = string.upper(string.format("%02x", string.byte(letter)))
+	end
+
+	return '%' .. table.concat(out, '%')
+end
+
+local loop = function()
+    forums.getTribeHistory(enum.id)
+    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
+end
+
+local reply = function(name)
+    local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
+    return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
+end
+
+local formatName = function(name)
+    return name:sub(1, 1):upper() .. name:sub(2):lower()
+end
+
+local getProfile = function(name, msg)
+    xpcall(function()
+        name = formatName(name)
+        print('> p ' .. name)
+        local mem = members[getStoredName(name)]
+        --[[if not mem then
+            msg:reply("The user is not in the tribe or is not indexed yet!")
+            return
+        end]]
+
+        local fName = mem.name:sub(1, -6)
+        local disc = mem.name:sub(-4)
+
+        --retrieving html chunk from cfm and atelier801 forums
+        local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
+
+        --sending an error message if the player is not available
+        if cfm:find([[<a style="font-size:21px;">We couldn't find what you were looking for :(</a>]]) then
+            msg:reply("We couldn't find what you were looking for :(")
+            return
+        end
+
+        --extracting data from html chunk
+        title = cfm:match("«(.+)»")
+        title = encodeUrl(title or 'Little mouse')
+        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
+        title = json.parse(tb)["text"][1]
+        level = cfm:match("<b>Level</b>: (%d+)<br>")
+        outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
+        --retrieving profile data from forums (using fromage)
+        local p = forums.getProfile(mem.name)
+        --returning the string containing profile data
+        msg.channel:send {
+            embed = {
+                title = name .. "'s Profile",
+                description = 
+                    "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
+                    "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
+                    "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
+                    "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
+                    "\nLevel: " .. (level or 1) .. 
+                    "\nBirthday: " .. (p.birthday or 'NA') .. 
+                    "\nLocation: " .. (p.location or 'NA') .. 
+                    "\nSoulmate: " .. (p.soulmate or 'NA') ..
+                    "\nRegistration date: " .. p.registrationDate ..
+                    "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
+                    "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
+                    "\n[Outfit](" .. outfit .. ")",
+                thumbnail = {url = p.avatarUrl}           
+            }
+        }
+    end, function(err) print("Error occured: " .. err) end)
+end
+
+local printOnlineUsers = function(from, target)
+    local res = ""
+    if from == "tfm" then
+        -- iterating through all online members in transformice
+        for name, _ in next, onlineMembers do
+            res = res .. "\n• ".. name
+        end
+        
+        target:send {
+            embed = {
+                title = "Online members from transformice",
+                description = res == "" and "Nobody is online right now!" or res
+            }
+        }
+
+    elseif from == "discord" then
+        local totalCount = 0
+        -- iterating through all the members in discord
+        tfm:sendWhisper(target, "Online members from disord: ")
+        for id, member in pairs(guild.members) do
+            if member ~= nil and member.name ~= nil and not member.user.bot and member.status ~= "offline" then
+                res = res .. member.name .. ", "
+                totalCount = totalCount + 1
+            end
+            if res:len() > 230 then
+                tfm:sendWhisper(target, res:sub(1, -3))
+                res = ""
+            end
+        end
+        tfm:sendWhisper(target, total == 0 and "Nobody is online right now" or res:sub(1, -3))
+        tfm:sendWhisper(target, "Total members: " .. totalCount .. " (Ingame member list is accessible with the tribe menu)")
+    end
+end
 
 coroutine.wrap(function()
     
@@ -181,182 +365,5 @@ coroutine.wrap(function()
     end)   
 end)()
 
-
-local getStoredName = function(name, memberList)
-    memberList = memberList or members
-    for n, r in next, memberList do             
-        if not not n:find(name .. '#?%d*') then
-            return n
-        end
-    end
-    return nil
-end
-
-local setRank = function(member, fromTfm)
-    if not fromTfm then
-        print('Setting rank of ' .. member.name)
-        for name, data in next, members do
-            local rank = data.rank
-            if name:lower():find(member.name:lower() .. '#?%d*') then
-                print('Found member mathcing the given instance')
-                print('Removing existing rank')            
-                removeRanks(member)
-                print('Adding the new rank \'' .. rank .. '\'')
-                member:addRole(enum.roles[rank])
-                return
-            end
-        end
-        removeRanks(member)
-        member:addRole(enum.roles['Passer-by'])
-    else
-        print('Setting rank of ' .. member)
-        for k, v in pairs(guild.members) do      
-            if member:find(v.name .. '#?%d*') then
-                print('Updating ' .. member .. '...')
-                removeRanks(v)
-                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
-                print('Updated ' .. v.name .. '!')
-            end
-        end
-    end
-end
-
-local removeRanks = function(member)
-    for role, id in next, enum.roles do
-        if member:hasRole(id) then
-            member:removeRole(id)
-        end
-    end
-end
-
-local getMembers = function()
-    print('Connecting to members...')
-    local page = 1
-    local p1 = forums.getTribeMembers(enum.id, page)
-    print('Fetching members... (total pages:' .. p1._pages .. ')')
-    while page <= p1._pages do
-        print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
-        for _, member in next, forums.getTribeMembers(enum.id, page) do
-            if (type(member) == 'table') then
-                members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
-                totalMembers = totalMembers + 1
-            end
-        end
-        page = page + 1
-    end
-    print('Updated all members!')
-end
-
-
---[[MISC]]
-
---[[Encode URL
-    copied shamelessly from Lautenschlager-id/ModuleBot
-]]
-local encodeUrl = function(url)
-	local out, counter = {}, 0
-
-	for letter in string.gmatch(url, '.') do
-		counter = counter + 1
-		out[counter] = string.upper(string.format("%02x", string.byte(letter)))
-	end
-
-	return '%' .. table.concat(out, '%')
-end
-
-local loop = function()
-    forums.getTribeHistory(enum.id)
-    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
-end
-
-local reply = function(name)
-    local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
-    return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
-end
-
-local formatName = function(name)
-    return name:sub(1, 1):upper() .. name:sub(2):lower()
-end
-
-local getProfile = function(name, msg)
-    xpcall(function()
-        name = formatName(name)
-        print('> p ' .. name)
-        local mem = members[getStoredName(name)]
-        if not mem then
-            msg:reply("The user is not in the tribe or is not indexed yet!")
-            return
-        end
-
-        local fName = mem.name:sub(1, -6)
-        local disc = mem.name:sub(-4)
-
-        --retrieving html chunk from cfm and atelier801 forums
-        local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
-        --extracting data from html chunk
-        title = cfm:match("«(.+)»")
-        title = encodeUrl(title or 'Little mouse')
-        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
-        title = json.parse(tb)["text"][1]
-        level = cfm:match("<b>Level</b>: (%d+)<br>")
-        outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
-        --retrieving profile data from forums (using fromage)
-        local p = forums.getProfile(mem.name)
-        --returning the string containing profile data
-        msg.channel:send {
-            embed = {
-                title = name .. "'s Profile",
-                description = 
-                    "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
-                    "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
-                    "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
-                    "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
-                    "\nLevel: " .. (level or 1) .. 
-                    "\nBirthday: " .. (p.birthday or 'NA') .. 
-                    "\nLocation: " .. (p.location or 'NA') .. 
-                    "\nSoulmate: " .. (p.soulmate or 'NA') ..
-                    "\nRegistration date: " .. p.registrationDate ..
-                    "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
-                    "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                    "\n[Outfit](" .. outfit .. ")",
-                thumbnail = {url = p.avatarUrl}           
-            }
-        }
-    end, function(err) print("Error occured: " .. err) end)
-end
-
-local printOnlineUsers = function(from, target)
-    local res = ""
-    if from == "tfm" then
-        -- iterating through all online members in transformice
-        for name, _ in next, onlineMembers do
-            res = res .. "\n• ".. name
-        end
-        
-        target:send {
-            embed = {
-                title = "Online members from transformice",
-                description = res == "" and "Nobody is online right now!" or res
-            }
-        }
-
-    elseif from == "discord" then
-        local totalCount = 0
-        -- iterating through all the members in discord
-        tfm:sendWhisper(target, "Online members from disord: ")
-        for id, member in pairs(guild.members) do
-            if member ~= nil and member.name ~= nil and not member.user.bot and member.status ~= "offline" then
-                res = res .. member.name .. ", "
-                totalCount = totalCount + 1
-            end
-            if res:len() > 230 then
-                tfm:sendWhisper(target, res:sub(1, -3))
-                res = ""
-            end
-        end
-        tfm:sendWhisper(target, total == 0 and "Nobody is online right now" or res:sub(1, -3))
-        tfm:sendWhisper(target, "Total members: " .. totalCount .. " (Ingame member list is accessible with the tribe menu)")
-    end
-end
 
 discord:run('Bot ' .. os.getenv('DISCORD'))
