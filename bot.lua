@@ -27,11 +27,6 @@ local tribeHouseCount = 0
 local onlineCount = 1
 local totalMembers = 0
 
-local loop = function()
-    forums.getTribeHistory(enum.id)
-    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
-end
-
 local getStoredName = function(name, memberList)
     memberList = memberList or members
     for n, r in next, memberList do             
