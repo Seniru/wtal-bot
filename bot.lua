@@ -1,4 +1,4 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -92,12 +92,6 @@ local getMembers = function()
     print('Updated all members!')
 end
 
-
---[[MISC]]
-
---[[Encode URL
-    copied shamelessly from Lautenschlager-id/ModuleBot
-]]
 local encodeUrl = function(url)
 	local out, counter = {}, 0
 
@@ -128,49 +122,54 @@ local getProfile = function(name, msg)
         name = formatName(name)
         print('> p ' .. name)
         local mem = members[getStoredName(name)]
-        --[[if not mem then
-            msg:reply("The user is not in the tribe or is not indexed yet!")
-            return
-        end]]
+        
+        -- setting member name to the name given if the member is not in the tribe
+        if not mem then
+            if name:find("#%d%d%d%d") then
+                mem = {name = name}
+            else 
+                mem = {name = name .. "#0000"}
+            end
+        end
 
         local fName = mem.name:sub(1, -6)
         local disc = mem.name:sub(-4)
 
         --retrieving html chunk from cfm and atelier801 forums
         local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
+        --retrieving profile data from forums (using fromage)
+        local p = forums.getProfile(mem.name)
 
         --sending an error message if the player is not available
-        if cfm:find([[<a style="font-size:21px;">We couldn't find what you were looking for :(</a>]]) then
+        if p == nil then
             msg:reply("We couldn't find what you were looking for :(")
             return
         end
-
         --extracting data from html chunk
-        title = cfm:match("«(.+)»")
+        local title = cfm:match("«(.+)»")
         title = encodeUrl(title or 'Little mouse')
         local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
         title = json.parse(tb)["text"][1]
-        level = cfm:match("<b>Level</b>: (%d+)<br>")
-        outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
-        --retrieving profile data from forums (using fromage)
-        local p = forums.getProfile(mem.name)
+        print(title)
+        local level = cfm:match("<b>Level</b>: (%d+)<br>")
+        local outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
         --returning the string containing profile data
         msg.channel:send {
             embed = {
                 title = name .. "'s Profile",
                 description = 
                     "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
-                    "»*\n\nRank: " .. (mem.rank or "Passer by") .. 
-                    "\nMember since: " .. (mem.joined and os.date('%d-%m-%Y %H:%M', mem.joined) or 'NA') .. 
+                    "»*" .. (mem.rank and "\n\nRank: " .. mem.rank or "\n\nTribe: " .. p.tribe) ..
+                    (mem.joined and "\nMember since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
                     "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
                     "\nLevel: " .. (level or 1) .. 
-                    "\nBirthday: " .. (p.birthday or 'NA') .. 
-                    "\nLocation: " .. (p.location or 'NA') .. 
-                    "\nSoulmate: " .. (p.soulmate or 'NA') ..
+                    (p.birthday and "\nBirthday: " .. p.birthday or "") ..
+                    (p.location and "\nLocation: " .. p.location or "") .. 
+                    (p.soulmate and "\nSoulmate: " .. p.soulmate or "") ..
                     "\nRegistration date: " .. p.registrationDate ..
                     "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                    "\n[Outfit](" .. outfit .. ")",
+                    ("\n[Outfit](" .. outfit .. ")"),
                 thumbnail = {url = p.avatarUrl}           
             }
         }
