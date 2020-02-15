@@ -17,7 +17,7 @@ local forums = fromage()
 local tfm = transfromage.client:new()
 
 local guild = nil
-local updated = -1
+local updated = false
 local histLogs = {}
 local members = {}
 local onlineMembers = {
@@ -91,6 +91,8 @@ local getMembers = function()
         page = page + 1
     end
     print('Updated all members!')
+    updated = true
+    tfm:joinTribeHouse()
 end
 
 local encodeUrl = function(url)
@@ -218,7 +220,6 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         print('Logged in successfully!')
         tfm:sendTribeMessage("Connected to tribe chat!")
-        tfm:joinTribeHouse()
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
@@ -326,7 +327,16 @@ coroutine.wrap(function()
 
     tfm:on("refreshPlayerList", function(playerList)
         tribeHouseCount = playerList and (playerList.count or 0) or 0
-        print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
+        if playerList and updated then
+            print("Joined tribe house. (Player count: " .. tribeHouseCount .. ")")
+            for name, data in next, playerList do
+                if not onlineMembers[name] and type(name) == "string" and name:find("#%d+") then
+                    onlineCount = onlineCount + 1
+                    onlineMembers[name] = true
+                    discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+                end
+            end
+        end
     end)
 
 
