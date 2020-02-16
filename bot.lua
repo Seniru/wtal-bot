@@ -41,7 +41,7 @@ end
 
 local removeRanks = function(member)
     for role, id in next, enum.roles do
-        if member:hasRole(id) then
+        if member:hasRole(id) and role ~= "manager" and role ~= "member" and role ~= "Verified" then
             member:removeRole(id)
         end
     end
