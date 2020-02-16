@@ -8,6 +8,7 @@ local timer = require('timer')
 local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
+local md5 = require('md5')
 
 local discord = discordia.Client({
     cacheAllMembers = true
@@ -20,6 +21,7 @@ local guild = nil
 local updated = false
 local histLogs = {}
 local members = {}
+local verificationKeys = {}
 local onlineMembers = {
     ["Wtal#5272"] = true
 }
@@ -211,6 +213,31 @@ local printOnlineUsers = function(from, target)
     end
 end
 
+local generateVerificationkey = function(id, randomseed)
+    math.randomseed(randomseed or os.time())
+    return md5.sumhexa(tostring(math.random(0, 10000) * id + math.random(0, 10000)))
+end
+
+local sendVerificationKey = function(member, channel, force)
+    if member:hasRole(enum.roles['Verified']) then
+        if force and member:hasRole(enum.roles["manager"]) then
+            local key = generateVerificationkey(member.user.id)
+            verificationKeys[key] = member
+            member.user:send("Here's your verification key! `" .. key .. "\n`Whisper the following to Wtal#5272 (`/c Wtal#5272`) to get verified\n")
+            member.user:send("```!verify " .. key .. "```")
+        elseif force then
+            channel:send("You are not permitted for force verification")
+        else
+            channel:send("You are verified already!")
+        end
+    else
+        local key = generateVerificationkey(member.user.id)
+        verificationKeys[key] = member
+        member.user:send("Here's your verification key! `" .. key .. "\n`Whisper the following to Wtal#5272 (`/c Wtal#5272`) to get verified\n")
+        member.user:send("```!verify " .. key .. "```")
+    end
+end
+
 coroutine.wrap(function()
     
     --[[Transfromage events]]
@@ -223,7 +250,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         print('Logged in successfully!')
         tfm:sendTribeMessage("Connected to tribe chat!")
-        --print('Logging in with forums...')
+        print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
@@ -300,6 +327,21 @@ coroutine.wrap(function()
         end
     end)
 
+    tfm:on("whisperMessage", function(playerName, message, community)
+        if message:find("!verify .+") then
+            local key = message:match("!verify (.+)")
+            if not verificationKeys[key] then
+                tfm:sendWhisper(playerName, "Your verification key doesn't match with any key in the database!")
+                tfm:sendWhisper(playerName, "Try verify again (> verify) or contact the admininstration for support")
+            else
+                tfm:sendWhisper(playerName, "Succesfully verified and connected player with " .. verificationKeys[key].name .. " on discord!")
+                verificationKeys[key]:setNickname(playerName:sub(1, -6))
+                verificationKeys[key]:addRole(enum.roles['Verified'])
+                verificationKeys[key] = nil
+            end
+        end
+    end)
+
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
         print("Player joined: (total players: " .. tribeHouseCount .. ")") 
@@ -344,7 +386,7 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         print("Starting transformice client...")
         tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
@@ -371,11 +413,19 @@ coroutine.wrap(function()
                 local cont = msg.content:gsub("`+", "")
                 tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
             end
+        -- verification
+        elseif msg.content:lower() == "> verify" then
+            sendVerificationKey(msg.member, msg.channel, false)
+        elseif msg.content:lower() == "> verify force" then
+            sendVerificationKey(msg.member, msg.channel, true)
         end
+
     end)
 
     discord:on('memberJoin', function(member)
-        guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server! Please tell us your in-game name, thanks in advance!! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧')
+        guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧\nWe have sent you a DM to verify you in order to give you the best experience!')
+        member:addRole(enum.roles["member"])
+        sendVerificationKey(member)
     end)
 
     discord:on('memberUpdate', function(member)
