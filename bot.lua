@@ -138,10 +138,15 @@ local getProfile = function(name, msg)
         --retrieving profile data from forums (using fromage)
         local p = forums.getProfile(mem.name)
 
-        --sending an error message if the player is not available
         if p == nil then
-            msg:reply("We couldn't find what you were looking for :(")
-            return
+            -- try again after reloading the module
+            forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+            p = forums.getProfile(mem.name)
+            -- send an error message if the player is not available
+            if p == nil then
+                msg:reply("We couldn't find what you were looking for :(")
+                return
+            end
         end
         --extracting data from html chunk
         local title = cfm:match("«(.+)»")
@@ -220,7 +225,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         print('Logged in successfully!')
         tfm:sendTribeMessage("Connected to tribe chat!")
-        print('Logging in with forums...')
+        --print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
@@ -341,7 +346,7 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         print("Starting transformice client...")
         tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
