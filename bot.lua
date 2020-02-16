@@ -307,11 +307,6 @@ coroutine.wrap(function()
     tfm:on("tribeMemberGetRole", function(member, setter, role)
         members[member].rank = role
         setRank(member, true)
-        if not onlineMembers[member] then
-            onlineCount = onlineCount + 1
-            onlineMembers[member] = true
-            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
-        end
     end)
 
     tfm:on("tribeMessage", function(member, message)
