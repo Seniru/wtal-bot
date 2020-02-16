@@ -157,7 +157,7 @@ local getProfile = function(name, msg)
                 title = name .. "'s Profile",
                 description = 
                     "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
-                    "»*" .. (mem.rank and "\n\nRank: " .. mem.rank or "\n\nTribe: " .. p.tribe) ..
+                    "»*" .. (mem.rank and "\n\nRank: " .. mem.rank or (p.tribe and "\n\nTribe: " .. p.tribe or "")) ..
                     (mem.joined and "\nMember since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
                     "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
                     "\nLevel: " .. (level or 1) .. 
