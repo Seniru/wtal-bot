@@ -130,6 +130,10 @@ local getProfile = function(name, msg)
             end
         end
 
+        if not forums.isConnected() then
+            forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        end
+
         local fName = mem.name:sub(1, -6)
         local disc = mem.name:sub(-4)
 
@@ -138,15 +142,9 @@ local getProfile = function(name, msg)
         --retrieving profile data from forums (using fromage)
         local p = forums.getProfile(mem.name)
 
-        if p == nil then
-            -- try again after reloading the module
-            forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
-            p = forums.getProfile(mem.name)
-            -- send an error message if the player is not available
-            if p == nil then
-                msg:reply("We couldn't find what you were looking for :(")
-                return
-            end
+        if p == nil then -- send an error message if the player is not available
+            msg:reply("We couldn't find what you were looking for :(")
+            return
         end
         --extracting data from html chunk
         local title = cfm:match("«(.+)»")
