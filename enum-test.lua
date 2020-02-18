@@ -3,6 +3,7 @@ local enum = {
     guild = '522976111836004353',
     channels = {
         general_chat = '522976112255696896',
+        lobby = '522976112255696896', -- no lobby here :P
         tribe_chat = '671247948406980621'
     },
     roles = {

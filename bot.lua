@@ -133,6 +133,7 @@ local getProfile = function(name, msg)
         end
 
         if not forums.isConnected() then
+            forums = fromage()
             forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         end
 
@@ -153,7 +154,6 @@ local getProfile = function(name, msg)
         title = encodeUrl(title or 'Little mouse')
         local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
         title = json.parse(tb)["text"][1]
-        print(title)
         local level = cfm:match("<b>Level</b>: (%d+)<br>")
         local outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
         --returning the string containing profile data
@@ -332,6 +332,13 @@ coroutine.wrap(function()
                 tfm:sendWhisper(playerName, "Succesfully verified and connected player with " .. verificationKeys[key].name .. " on discord!")
                 verificationKeys[key]:setNickname(playerName:sub(1, -6))
                 verificationKeys[key]:addRole(enum.roles['Verified'])
+                guild:getChannel(enum.channels.general_chat):send(verificationKeys[key].mentionString )
+                guild:getChannel(enum.channels.general_chat):send {
+                    embed = {
+                        description = "Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･\nSay hi and introduce yourself to others. Also heads onto <#620437243944763412> to add some roles!",
+                        color = 0x22ff22                        
+                    }
+                }
                 verificationKeys[key] = nil
             end
         end
@@ -418,7 +425,14 @@ coroutine.wrap(function()
     end)
 
     discord:on('memberJoin', function(member)
-        guild:getChannel(enum.channels.general_chat):send('Welcome ' .. member.user.mentionString .. ' to the WTAL server (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧\nWe have sent you a DM to verify you in order to give you the best experience!')
+        guild:getChannel(enum.channels.lobby):send(member.user.mentionString)
+        guild:getChannel(enum.channels.lobby):send { 
+            embed = {
+                title = "Welcome!",
+                description = 'Welcome to the WTAL server (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧\nWe have sent you a DM to verify you in order to give you the best experience!',
+                color = 0x0066ff
+            }
+         }
         member:addRole(enum.roles["member"])
         sendVerificationKey(member)
     end)
