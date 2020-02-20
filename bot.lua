@@ -128,7 +128,10 @@ function getMembers()
         print('Getting page ' .. page .. ' of ' ..p1._pages .. ' ...')
         for _, member in next, fClient.getTribeMembers(enum.id, page) do
             if (type(member) == 'table') then
-                members[member.name] = {rank=member.rank, joined=member.timestamp / 1000, name=member.name}
+                print(member.name)
+                print(member.rank)
+                print(member.timestamp)
+                members[member.name] = {rank=member.rank, joined=(member.timestamp or 0) / 1000, name=member.name}
             end
         end
         page = page + 1
