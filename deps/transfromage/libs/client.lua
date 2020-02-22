@@ -907,10 +907,10 @@ packetListener = {
 				--[[@
 					@name connection
 					@desc Triggered when the player is logged in and ready to perform actions.
-					@param playerName<string> The name of the player that has connected.
-					@param community<int> The community ID that the account has been logged into.
 					@param playerId<int> The temporary id of the player during the section.
+					@param playerName<string> The name of the player that has connected.
 					@param playedTime<int> The time played by the player.
+					@param community<int> The community ID that the account has been logged into.
 				]]
 				self.event:emit("connection", playerId, self.playerName, playedTime, community)
 			end)
@@ -1062,7 +1062,7 @@ packetListener = {
 				@param data<table> The data of the topics.
 				@struct @data
 				{
-					[i] = {
+					[x] = {
 						id = 0, -- The id of the topic.
 						title = "", -- The title of the topic.
 						authorId = 0, -- The id of the topic author.
@@ -1112,7 +1112,7 @@ packetListener = {
 				data.messages[totalMessages].author = packet:readUTF()
 				data.messages[totalMessages].content = string_gsub(packet:readUTF(), "\r", "\r\n")
 				data.messages[totalMessages].canLike = packet:readBool()
-				data.messages[totalMessages].likes = packet:read16()
+				data.messages[totalMessages].likes = packet:readSigned16()
 			end
 
 			data.author = data.messages[1].author
@@ -1232,7 +1232,8 @@ packetListener = {
 	},
 	[44] = {
 		[1] = function(self, packet, connection, identifiers) -- Switch bulle identifiers
-			local bulleId = packet:read32()
+			local serverTimestamp = packet:read32()
+			local userId = packet:read32()
 			local bulleIp = packet:readUTF()
 
 			local oldBulle = self.bulle
@@ -1244,7 +1245,7 @@ packetListener = {
 					oldBulle:close()
 				end
 
-				self.bulle:send(enum.identifier.bulleConnection, byteArray:new():write32(bulleId))
+				self.bulle:send(enum.identifier.bulleConnection, byteArray:new():write32(serverTimestamp):write32(userId))
 				--[[@
 					@name switchBulleConnection
 					@desc Triggered when the bulle connection is switched.
@@ -1881,7 +1882,7 @@ client.processXml = function(self, process)
 	if process == nil then
 		self._process_xml = not self._process_xml
 	else
-		self._process_xml = handprocessle
+		self._process_xml = process
 	end
 	return self._process_xml
 end
@@ -1955,7 +1956,7 @@ end
 -- Whisper
 --[[@
 	@name sendWhisper
-	@desc Sends a whisper to an user.
+	@desc Sends a whisper to a user.
 	@desc /!\ Note that a message has a limit of 80 characters in the first 24 hours after the account creation, and 255 characters later. You must handle the limit yourself or the bot may get disconnected.
 	@param message<string> The message.
 	@param targetUser<string> The user who will receive the whisper.
