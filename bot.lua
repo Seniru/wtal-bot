@@ -28,6 +28,13 @@ local onlineMembers = {
 local tribeHouseCount = 0
 local onlineCount = 1
 local totalMembers = 0
+local attempts = 5
+
+loop = function()
+    forums.getTribeHistory(enum.id)
+    tfm:playEmoticon(math.random(0, 9))
+    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
+end
 
 local getStoredName = function(name, memberList)
     memberList = memberList or members
@@ -47,8 +54,9 @@ local removeRanks = function(member)
     end
 end
 
-local setRank = function(member, fromTfm)
-    if not fromTfm then
+setRank = function(member, fromTfm)
+    print('setting rank')
+    if (not fromTfm) and updated and member:hasRole(enum.roles["Verified"]) then
         print('Setting rank of ' .. member.name)
         for name, data in next, members do
             local rank = data.rank
@@ -63,14 +71,11 @@ local setRank = function(member, fromTfm)
         end
         removeRanks(member)
         member:addRole(enum.roles['Passer-by'])
-    else
+    elseif fromTfm and updated then
         print('Setting rank of ' .. member)
         for k, v in pairs(guild.members) do      
             if member:find(v.name .. '#?%d*') then
-                print('Updating ' .. member .. '...')
-                removeRanks(v)
-                v:addRole(enum.roles[r] or enum.roles['Passer-by'])
-                print('Updated ' .. v.name .. '!')
+                setRank(v, false)
             end
         end
     end
@@ -109,8 +114,14 @@ local encodeUrl = function(url)
 end
 
 local reply = function(name)
-    local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
-    return hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
+    local res = ""
+    xpcall(function()
+        print("Requesting useless facts...")
+        local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
+        res = hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
+        print("Request completed!")
+    end, function() print("Request failed!") res = "Oops! An error occured!" end)
+    return res
 end
 
 local formatName = function(name)
@@ -130,11 +141,6 @@ local getProfile = function(name, msg)
             else 
                 mem = {name = name .. "#0000"}
             end
-        end
-
-        if not forums.isConnected() then
-            forums = fromage()
-            forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         end
 
         local fName = mem.name:sub(1, -6)
@@ -248,17 +254,23 @@ coroutine.wrap(function()
     end)
     
     tfm:on("connection", function(name, comm, id, time)
+        attempts = 5
         print('Logged in successfully!')
         tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        loop()
     end)
 
     tfm:on("connectionFailed", function()
-        print("Connection to transformice failed!\n Trying again")
-        tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
+        if attempts > 0 then
+            print("Connection to transformice failed!\n rying again (Attempts: " .. attempts .. " / 5)")
+            tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
+        else
+            print("Connection to transformice failed!\n Restarting!")
+        end
     end)
 
     tfm:on("disconnection", function()
@@ -386,6 +398,7 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
+        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
@@ -420,6 +433,14 @@ coroutine.wrap(function()
             sendVerificationKey(msg.member, msg.channel, false)
         elseif msg.content:lower() == "> verify force" then
             sendVerificationKey(msg.member, msg.channel, true)
+        -- restart command
+        elseif msg.content:lower() == "> restart" then
+            if msg.member:hasRole(enum.roles["manager"]) then
+                msg:reply("Restarting the bot...")
+                os.exit(1)
+            else
+                msg:reply("You don't have enough permissions to do this action!")
+            end
         end
 
     end)
@@ -443,7 +464,7 @@ coroutine.wrap(function()
         if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
             setRank(member)
         end
-    end)   
+    end)
 end)()
 
 
