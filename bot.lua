@@ -266,10 +266,11 @@ coroutine.wrap(function()
 
     tfm:on("connectionFailed", function()
         if attempts > 0 then
-            print("Connection to transformice failed!\n rying again (Attempts: " .. attempts .. " / 5)")
+            print("Connection to transformice failed!\nTrying again (Attempts: " .. attempts .. " / 5)")
+            attempts = attempts - 1
             tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
         else
-            print("Connection to transformice failed!\n Restarting!")
+            print("Connection to transformice failed!\nRestarting!")
         end
     end)
 
