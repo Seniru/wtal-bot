@@ -271,6 +271,7 @@ coroutine.wrap(function()
             tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
         else
             print("Connection to transformice failed!\nRestarting!")
+			os.exit(1)
         end
     end)
 
