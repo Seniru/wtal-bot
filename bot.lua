@@ -298,7 +298,6 @@ coroutine.wrap(function()
 
     tfm:on("newTribeMember", function(member)
         tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
-        tfm:sendTribeMessage("Don't forget to check our discord server at https://discord.gg/8g7Hfnd")
         members[member] = {rank='Stooge', joined=os.time(), name=member}
         setRank(member, true)
 		onlineMembers[member] = true
