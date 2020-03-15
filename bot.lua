@@ -31,7 +31,6 @@ local totalMembers = 0
 local attempts = 5
 
 loop = function()
-    forums.getTribeHistory(enum.id)
     tfm:playEmoticon(math.random(0, 9))
     timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
 end
@@ -146,39 +145,52 @@ local getProfile = function(name, msg)
         local fName = mem.name:sub(1, -6)
         local disc = mem.name:sub(-4)
 
+        local p = {}
+
         --retrieving html chunk from cfm and atelier801 forums
         local _, cfm = http.request('GET', 'https://cheese.formice.com/transformice/mouse/' .. fName .. "%23" .. disc)
         --retrieving profile data from forums (using fromage)
-        local p = forums.getProfile(mem.name)
+        local _, a801p = http.request('GET', 'https://atelier801.com/profile?pr=' .. fName .. '%23' .. disc)
 
-        if p == nil then -- send an error message if the player is not available
+        if a801p:find("La requête contient un ou plusieurs paramètres invalides") then
             msg:reply("We couldn't find what you were looking for :(")
             return
         end
+
+        p.registrationDate = a801p:match("Date d'inscription</span> : (.-)</span>")
+        p.gender = a801p:match("Genre :.- (%S+)%s+<br>")
+        p.gender = p.gender and ({Masculin="Male", Féminin="Female"})[p.gender] or "None"
+        p.birthday = a801p:match("Date de naissance :</span> (.-)</span>")
+        p.location = a801p:match("Localisation :</span> (.-)<br>")
+        p.tribe = a801p:match("cadre%-tribu%-nom\">(.-)</span>")
+        soulFname, souldisc = a801p:match("nom%-utilisateur%-scindable\">.->%s*(.-)<.-hashtag%-pseudo\"> #(%d+)</span>")
+        p.soulmate = soulFname and (soulFname .. "#" .. souldisc) or nil
+        p.avatarUrl = a801p:match("(http://avatars%.atelier801%.com/%d+/(%d+)%.%a+)")
+        
         --extracting data from html chunk
-        local title = cfm:match("«(.+)»")
-        title = encodeUrl(title or 'Little mouse')
-        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. title .. '&lang=es-en&format=plain')
-        title = json.parse(tb)["text"][1]
-        local level = cfm:match("<b>Level</b>: (%d+)<br>")
-        local outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
+        p.title = cfm:match("«(.+)»")
+        p.title = encodeUrl(p.title or 'Little mouse')
+        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. p.title .. '&lang=es-en&format=plain')
+        p.title = json.parse(tb)["text"][1]
+        p.level = cfm:match("<b>Level</b>: (%d+)<br>")
+        p.outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
         --returning the string containing profile data
         msg.channel:send {
             embed = {
                 title = name .. "'s Profile",
                 description = 
-                    "**" .. mem.name .. "** \n*«" .. (title or "Little mouse") .. 
+                    "**" .. mem.name .. "** \n*«" .. (p.title or "Little mouse") .. 
                     "»*" .. (mem.rank and "\n\nRank: " .. mem.rank or (p.tribe and "\n\nTribe: " .. p.tribe or "")) ..
                     (mem.joined and "\nMember since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
-                    "\nGender: " .. ({"None", "Female", "Male"})[p.gender + 1] .. 
-                    "\nLevel: " .. (level or 1) .. 
+                    "\nGender: " .. p.gender .. 
+                    "\nLevel: " .. (p.level or 1) .. 
                     (p.birthday and "\nBirthday: " .. p.birthday or "") ..
                     (p.location and "\nLocation: " .. p.location or "") .. 
                     (p.soulmate and "\nSoulmate: " .. p.soulmate or "") ..
                     "\nRegistration date: " .. p.registrationDate ..
                     "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                    ("\n[Outfit](" .. outfit .. ")"),
+                    ("\n[Outfit](" .. p.outfit .. ")"),
                 thumbnail = {url = p.avatarUrl}           
             }
         }
