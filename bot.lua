@@ -46,16 +46,16 @@ local getStoredName = function(name, memberList)
 end
 
 local removeRanks = function(member)
-    for role, id in next, enum.roles do
-        if member:hasRole(id) and role ~= "manager" and role ~= "member" and role ~= "Verified" then
-            member:removeRole(id)
+    for role, data in next, enum.roles do
+        if member:hasRole(data.id) and role ~= "manager" and role ~= "member" and role ~= "Verified" then
+            member:removeRole(data.id)
         end
     end
 end
 
 setRank = function(member, fromTfm)
     print('setting rank')
-    if (not fromTfm) and updated and member:hasRole(enum.roles["Verified"]) then
+    if (not fromTfm) and updated and member:hasRole(enum.roles["Verified"].id) then
         print('Setting rank of ' .. member.name)
         for name, data in next, members do
             local rank = data.rank
@@ -64,12 +64,12 @@ setRank = function(member, fromTfm)
                 print('Removing existing rank')            
                 removeRanks(member)
                 print('Adding the new rank \'' .. rank .. '\'')
-                member:addRole(enum.roles[rank])
+                member:addRole(enum.roles[rank].id)
                 return
             end
         end
         removeRanks(member)
-        member:addRole(enum.roles['Passer-by'])
+        member:addRole(enum.roles['Passer-by'].id)
     elseif fromTfm and updated then
         print('Setting rank of ' .. member)
         for k, v in pairs(guild.members) do      
@@ -199,12 +199,34 @@ end
 
 local printOnlineUsers = function(from, target)
     local res = ""
-    if from == "tfm" then
+    if from == "tfm" and updated then
+        local online = {}
         -- iterating through all online members in transformice
         for name, _ in next, onlineMembers do
-            res = res .. "\n• ".. name
+            if online[members[name].rank] then
+                online[members[name].rank] = online[members[name].rank] .. "\n• ".. name
+            else
+                online[members[name].rank] = "\n• ".. name
+            end
         end
+        -- storing the ranks in order
+        local orderedRanks = {}
+        for rankName, data in next, enum.roles do
+            if not ({Verified = true, manager = true, member = true, ['Passer-by'] = true})[rankName] then
+                table.insert(orderedRanks, {rank = rankName, index = data.index})
+            end
+        end
+
+        table.sort(orderedRanks, function(e1, e2)
+            return e1.index < e2.index
+        end)
         
+        for _, data in next, orderedRanks do
+            if online[data.rank] then
+                res = res .. "\n\n**" .. data.rank .. "**" .. online[data.rank]
+            end
+        end
+      
         target:send {
             embed = {
                 title = "Online members from transformice",
@@ -237,8 +259,8 @@ local generateVerificationkey = function(id, randomseed)
 end
 
 local sendVerificationKey = function(member, channel, force)
-    if member:hasRole(enum.roles['Verified']) then
-        if force and member:hasRole(enum.roles["manager"]) then
+    if member:hasRole(enum.roles['Verified'].id) then
+        if force and member:hasRole(enum.roles["manager"].id) then
             local key = generateVerificationkey(member.user.id)
             verificationKeys[key] = member
             member.user:send("Here's your verification key! `" .. key .. "\n`Whisper the following to Wtal#5272 (`/c Wtal#5272`) to get verified\n")
@@ -356,7 +378,7 @@ coroutine.wrap(function()
             else
                 tfm:sendWhisper(playerName, "Succesfully verified and connected player with " .. verificationKeys[key].name .. " on discord!")
                 verificationKeys[key]:setNickname(playerName:sub(1, -6))
-                verificationKeys[key]:addRole(enum.roles['Verified'])
+                verificationKeys[key]:addRole(enum.roles['Verified'].id)
                 guild:getChannel(enum.channels.general_chat):send(verificationKeys[key].mentionString )
                 guild:getChannel(enum.channels.general_chat):send {
                     embed = {
@@ -448,7 +470,7 @@ coroutine.wrap(function()
             sendVerificationKey(msg.member, msg.channel, true)
         -- restart command
         elseif msg.content:lower() == "> restart" then
-            if msg.member:hasRole(enum.roles["manager"]) then
+            if msg.member:hasRole(enum.roles["manager"].id) then
                 msg:reply("Restarting the bot...")
                 os.exit(1)
             else
@@ -467,14 +489,14 @@ coroutine.wrap(function()
                 color = 0x0066ff
             }
          }
-        member:addRole(enum.roles["member"])
+        member:addRole(enum.roles["member"].id)
         sendVerificationKey(member)
     end)
 
     discord:on('memberUpdate', function(member)
         print('Member Update event fired!')
         local stored = members[getStoredName(member.name)]
-        if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank] or enum.roles['Passer-by']) then
+        if not member.user.bot and not member:hasRole(stored and enum.roles[stored.rank].id or enum.roles['Passer-by'].id) then
             setRank(member)
         end
     end)
