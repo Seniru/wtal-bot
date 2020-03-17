@@ -4,7 +4,8 @@ local enum = {
     channels = {
         general_chat = '570225731385294858',
         lobby = '678770711791140875',
-        tribe_chat = '671247476782661632'
+        tribe_chat = '671247476782661632',
+        question_otd = '626192940364202004'
     },
     roles = {
         ['Passer-by']           = {id = '571736272163438650', index = 28},

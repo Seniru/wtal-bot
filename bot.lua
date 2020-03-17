@@ -8,6 +8,7 @@ local timer = require('timer')
 local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
+local qotd = require('qotd-client')
 local md5 = require('md5')
 
 local discord = discordia.Client({
@@ -32,7 +33,10 @@ local attempts = 5
 
 loop = function()
     tfm:playEmoticon(math.random(0, 9))
-    timer.setTimeout(1000 * 60 * 5, coroutine.wrap(loop))
+    if not qotd.isInCooldown(http, json) then
+        askQuestion(guild:getMember(discord.user.id))
+    end
+    timer.setTimeout(1000 * 60 * (testing and 1 or 15), coroutine.wrap(loop))
 end
 
 local getStoredName = function(name, memberList)
@@ -191,7 +195,8 @@ local getProfile = function(name, msg)
                     "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
                     ("\n[Outfit](" .. p.outfit .. ")"),
-                thumbnail = {url = p.avatarUrl}           
+                thumbnail = {url = p.avatarUrl},
+                color = 0x2987ba          
             }
         }
     end, function(err) print("Error occured: " .. err) end)
@@ -230,7 +235,8 @@ local printOnlineUsers = function(from, target)
         target:send {
             embed = {
                 title = "Online members from transformice",
-                description = res == "" and "Nobody is online right now!" or res
+                description = res == "" and "Nobody is online right now!" or res,
+                color = 0x2987ba
             }
         }
 
@@ -276,6 +282,56 @@ local sendVerificationKey = function(member, channel, force)
         member.user:send("Here's your verification key! `" .. key .. "\n`Whisper the following to Wtal#5272 (`/c Wtal#5272`) to get verified\n")
         member.user:send("```!verify " .. key .. "```")
     end
+end
+
+addQuestion = function(question, member, target)
+    if question:find("^%s*$") then
+        target:send("You should add a question dumbo!")
+    elseif not member:hasRole(enum.roles["manager"].id) then
+        target:send("You are not permitted to do this action!")
+    else
+        print("Adding a new QOTD")
+        qotd.addQuestion(question, http, json)
+        target:send("Added the new question!")
+    end
+end
+
+askQuestion = function(member, target, force)
+    if (member.user.id ~= discord.user.id) and (not member:hasRole(enum.roles["manager"].id)) then
+        target:send("You are not permitted to do this action!")
+    else
+        print("Posting a new QOTD...")
+        local res, success = qotd.retrieveQuestion(http, json, force)
+        if success then
+            guild:getChannel(enum.channels.question_otd):send {
+                embed = {
+                    color = 0x2987ba,
+                    title = "QOTD #" .. res.index,
+                    description = res.question
+                }
+            }
+            if target then target:send("Asked a new question!") end
+        else
+            if target then
+                target:send(res)
+            end
+            print(res)
+        end
+    end
+end
+
+getQuestionQueue = function(target)
+    local list, count = qotd.getQuestionQueue(http, json)
+    target:send {
+        embed = {
+            title = "QOTD queue",
+            description = list .. "\n",
+            footer = {
+                text = "Total Questions: " .. count
+            },
+            color = 0x2987ba
+        }
+    }
 end
 
 coroutine.wrap(function()
@@ -468,6 +524,15 @@ coroutine.wrap(function()
             sendVerificationKey(msg.member, msg.channel, false)
         elseif msg.content:lower() == "> verify force" then
             sendVerificationKey(msg.member, msg.channel, true)
+        -- QOTD commands
+        elseif msg.content:find("^>%s*qotd add.*") then
+            addQuestion(msg.content:match(">%s*qotd add (.*)"), msg.member, msg.channel)
+        elseif msg.content:find("^>%s*qotd ask%s*$") then
+            askQuestion(msg.member, msg.channel)
+        elseif msg.content:find("^>%s*qotd ask%s+force%s*$") then
+            askQuestion(msg.member, msg.channel, true)
+        elseif msg.content:find("^>%s*qotd queue%s*$") then
+            getQuestionQueue(msg.channel)
         -- restart command
         elseif msg.content:lower() == "> restart" then
             if msg.member:hasRole(enum.roles["manager"].id) then
