@@ -57,13 +57,33 @@ qotd.getQuestionQueue = function(http, json)
         local res = ""
         local count = 0
         for _, question in next, questions do
-            res = res .. "• " .. question .. "\n"
+            res = res .. (count + 1) .. ". " .. question .. "\n"
             count = count + 1
         end
         return res, count
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
         return "An error occured in the endpoint", false
+    end)
+end
+
+qotd.deleteQuestion = function(questionId, http, json)
+    return xpcall(function()
+        print("Retrieving JSON data...")
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local res = json.parse(body)
+        print("Deleting the question...")
+        table.remove(res.questions, questionId)
+        print("Updating JSON data...")
+        http.request("PUT", JSON_BIN_ENDPOINT, {
+                {"Content-Type", "application/json"},
+                {"secret-key", JSON_BIN_SECRET},
+                {"versioning", "false"}
+            }, json.stringify(res)
+        )
+        print("Done!")
+    end, function(err)
+        print("An error occured in the endpoint\nErr: " .. err)
     end)
 end
 

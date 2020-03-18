@@ -32,7 +32,7 @@ local totalMembers = 0
 local attempts = 5
 
 loop = function()
-    --tfm:playEmoticon(math.random(0, 9))
+    tfm:playEmoticon(math.random(0, 9))
     if not qotd.isInCooldown(http, json) then
         askQuestion(guild:getMember(discord.user.id))
     end
@@ -285,8 +285,8 @@ local sendVerificationKey = function(member, channel, force)
 end
 
 addQuestion = function(question, member, target)
-    if question:find("^%s*$") then
-        target:send("You should add a question dumbo!")
+    if question == nil or question:find("^%s*$") then
+        target:send("You must add a valid question!")
     elseif not member:hasRole(enum.roles["manager"].id) then
         target:send("You are not permitted to do this action!")
     else
@@ -317,6 +317,19 @@ askQuestion = function(member, target, force)
             end
             print(res)
         end
+    end
+end
+
+deleteQuestion = function(question, member, target)
+    -- validation
+    if not member:hasRole(enum.roles["manager"].id) then    
+        target:send("You are not permitted to this action!")
+    elseif question == nil or question:find("^%s$*") then
+        target:send("You must provide a valid number as the argument!")
+    else
+        local qId = tonumber(question)
+        local success = qotd.deleteQuestion(qId, http, json)
+        target:send(success and "Deleted the question" or "An error occured!")
     end
 end
 
@@ -493,11 +506,10 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
-        --forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
-        --print("Starting transformice client...")
-        --tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        loop()
+        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        print("Starting transformice client...")
+        tfm:handlePlayers(true)
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
@@ -538,6 +550,8 @@ coroutine.wrap(function()
             askQuestion(msg.member, msg.channel, true)
         elseif msg.content:find("^>%s*qotd queue%s*$") then
             getQuestionQueue(msg.channel)
+        elseif msg.content:find("^>%s*qotd delete.*$") then
+            deleteQuestion(msg.content:match("^>%s*qotd delete (%d+)$"), msg.member, msg.channel)
         -- restart command
         elseif msg.content:lower() == "> restart" then
             if msg.member:hasRole(enum.roles["manager"].id) then
