@@ -32,7 +32,7 @@ local totalMembers = 0
 local attempts = 5
 
 loop = function()
-    tfm:playEmoticon(math.random(0, 9))
+    --tfm:playEmoticon(math.random(0, 9))
     if not qotd.isInCooldown(http, json) then
         askQuestion(guild:getMember(discord.user.id))
     end
@@ -291,8 +291,8 @@ addQuestion = function(question, member, target)
         target:send("You are not permitted to do this action!")
     else
         print("Adding a new QOTD")
-        qotd.addQuestion(question, http, json)
-        target:send("Added the new question!")
+        local success = qotd.addQuestion(question, http, json)
+        target:send(success and "Added the new question!" or "An error occured in the endpoint!")
     end
 end
 
@@ -301,7 +301,7 @@ askQuestion = function(member, target, force)
         target:send("You are not permitted to do this action!")
     else
         print("Posting a new QOTD...")
-        local res, success = qotd.retrieveQuestion(http, json, force)
+        local _, res, success = qotd.retrieveQuestion(http, json, force)
         if success then
             guild:getChannel(enum.channels.question_otd):send {
                 embed = {
@@ -321,7 +321,11 @@ askQuestion = function(member, target, force)
 end
 
 getQuestionQueue = function(target)
-    local list, count = qotd.getQuestionQueue(http, json)
+    local success, list, count = qotd.getQuestionQueue(http, json)
+    if not success then
+        target:send(list)
+        return
+    end
     target:send {
         embed = {
             title = "QOTD queue",
@@ -489,10 +493,11 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
-        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
-        print("Starting transformice client...")
-        tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        --print("Starting transformice client...")
+        --tfm:handlePlayers(true)
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        loop()
     end)
 
     discord:on('messageCreate', function(msg)
