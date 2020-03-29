@@ -1,5 +1,7 @@
 -- Optimization --
 local bit_band = bit.band
+local bit_bor = bit.bor
+local bit_bxor = bit.bxor
 local bit_lshift = bit.lshift
 local bit_rshift = bit.rshift
 local string_char = string.char
@@ -9,6 +11,13 @@ local table_arrayRange = table.arrayRange
 local table_mapArray = table.mapArray
 local table_setNewClass = table.setNewClass
 local table_writeBytes = table.writeBytes
+------------------
+
+local modulo256 = function(n)
+	-- It could be n & 0xFF but, in Lua, modulo is slightly more performatic
+	return n % 256
+end
+
 ------------------
 
 local byteArray = table.setNewClass()
@@ -22,12 +31,14 @@ end
 	@param stack?<table> An array of bytes.
 	@returns byteArray The new Byte Array object.
 	@struct {
-		stack = { } -- The bytes stack
+		stack = { }, -- The bytes stack
+		stackLen = 0 -- Total bytes stored in @stack
 	}
 ]]
 byteArray.new = function(self, stack)
 	return setmetatable({
-		stack = (stack or { }) -- Array of bytes
+		stack = (stack or { }), -- Array of bytes
+		stackLen = (stack and #stack or 0)
 	}, self)
 end
 --[[@
@@ -38,13 +49,16 @@ end
 ]]
 byteArray.write8 = function(self, ...)
 	local tbl = { ... }
-	if #tbl == 0 then
+
+	local tblLen = #tbl
+	if tblLen == 0 then
+		tblLen = 1
+
 		tbl = { 0 }
 	end
+	self.stackLen = self.stackLen + tblLen
 
-	local bytes = table_mapArray(tbl, function(n)
-		return n % 256
-	end)
+	local bytes = table_mapArray(tbl, modulo256)
 	table_add(self.stack, bytes)
 	return self
 end
@@ -55,8 +69,8 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write16 = function(self, short)
-	-- (long >> 8) & 255, long & 255
-	return self:write8(bit_band(bit_rshift(short, 8), 255), bit_band(short, 255))
+	-- (long >> 8) & 0xFF, long & 0xFF
+	return self:write8(bit_rshift(short, 8), short)
 end
 --[[@
 	@name write24
@@ -65,8 +79,8 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write24 = function(self, int)
-	-- (long >> 16) & 255, (long >> 8) & 255, long & 255
-	return self:write8(bit_band(bit_rshift(int, 16), 255), bit_band(bit_rshift(int, 8), 255), bit_band(int, 255))
+	-- (long >> 16) & 0xFF, (long >> 8) & 0xFF, long & 0xFF
+	return self:write8(bit_rshift(int, 16), bit_rshift(int, 8), int)
 end
 --[[@
 	@name write32
@@ -75,8 +89,8 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write32 = function(self, long)
-	-- (long >> 24) & 255, (long >> 16) & 255, (long >> 8) & 255, long & 255
-	return self:write8(bit_band(bit_rshift(long, 24), 255), bit_band(bit_rshift(long, 16), 255), bit_band(bit_rshift(long, 8), 255), bit_band(long, 255))
+	-- (long >> 24) & 0xFF, (long >> 16) & 0xFF, (long >> 8) & 0xFF, long & 0xFF
+	return self:write8(bit_rshift(long, 24), bit_rshift(long, 16), bit_rshift(long, 8),	long)
 end
 --[[@
 	@name writeUTF
@@ -89,8 +103,10 @@ byteArray.writeUTF = function(self, utf)
 		utf = string_getBytes(utf)
 	end
 
-	self:write16(#utf)
+	local utfLen = #utf
+	self:write16(utfLen)
 	table_add(self.stack, utf)
+	self.stackLen = self.stackLen + utfLen
 
 	return self
 end
@@ -105,8 +121,10 @@ byteArray.writeBigUTF = function(self, bigUtf)
 		bigUtf = string_getBytes(bigUtf)
 	end
 
-	self:write24(#bigUtf)
+	local bigUtfLen = #bigUtf
+	self:write24(bigUtfLen)
 	table_add(self.stack, bigUtf)
+	self.stackLen = self.stackLen + bigUtfLen
 
 	return self
 end
@@ -132,6 +150,8 @@ byteArray.read8 = function(self, quantity)
 	self.stack = table_arrayRange(self.stack, quantity + 1)
 
 	local sLen = #byteStack
+	self.stackLen = self.stackLen - sLen
+
 	local fillVal = quantity - sLen
 	if fillVal > 0 then
 		for i = 1, fillVal do
@@ -148,8 +168,19 @@ end
 ]]
 byteArray.read16 = function(self)
 	local shortStack = self:read8(2)
-	-- s[1] << 8 = s[2]
+	-- s[1] << 8 + s[2]
 	return bit_lshift(shortStack[1], 8) + shortStack[2]
+end
+--[[@
+	@name readSigned16
+	@desc Extracts a short signed integer from the packet stack.
+	@returns int A short signed integer.
+]]
+byteArray.readSigned16 = function(self)
+	local shortStack = self:read8(2)
+	-- ((s[1] << 8 | s[2] << 0) ~ 0x8000) - 0x8000
+	return bit_bxor(bit_bor(bit_lshift(shortStack[1], 8), bit_lshift(shortStack[2], 0)), 0x8000)
+		- 0x8000
 end
 --[[@
 	@name read24
@@ -169,7 +200,8 @@ end
 byteArray.read32 = function(self)
 	local longStack = self:read8(4)
 	-- l[1] << 24 + l[2] << 16 + l[3] << 8 + l[4]
-	return bit_lshift(longStack[1], 24) + bit_lshift(longStack[2], 16) + bit_lshift(longStack[3], 8) + longStack[4]
+	return bit_lshift(longStack[1], 24) + bit_lshift(longStack[2], 16) + bit_lshift(longStack[3], 8)
+		+ longStack[4]
 end
 --[[@
 	@name readUTF
@@ -207,8 +239,15 @@ byteArray.readBool = function(self)
 end
 
 ----- Compatibility -----
-byteArray.readByte, byteArray.readShort, byteArray.readWrite, byteArray.readLong = "read8", "read16", "read24", "read32"
-byteArray.writeByte, byteArray.writeShort, byteArray.writeWrite, byteArray.writeLong = "write8", "write16", "write24", "write32"
+byteArray.readByte = "read8"
+byteArray.readShort = "read16"
+byteArray.readWrite = "read24"
+byteArray.readLong = "read32"
+
+byteArray.writeByte = "write8"
+byteArray.writeShort = "write16"
+byteArray.writeWrite = "write24"
+byteArray.writeLong = "write32"
 -------------------------
 
 return byteArray

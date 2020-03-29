@@ -12,10 +12,31 @@ local math_floor = math.floor
 local string_char = string.char
 local string_sub = string.sub
 local table_concat = table.concat
+local table_setNewClass = table.setNewClass
 local table_writeBytes = table.writeBytes
 ------------------
 
-local getPasswordHash
+local encode = table_setNewClass()
+
+--[[@
+	@name new
+	@desc Creates a new instance of Encode. Alias: `encode()`.
+	@param hasSpecialRole?<boolean> Whether the bot has the game's special role bot or not.
+	@returns encode The new Encode object.
+	@struct {
+		hasSpecialRole = false, -- Whether the bot has the game's special role bot or not.
+		identificationKeys = { }, -- The identification keys of the SWF/endpoint.
+		messageKeys = { } -- The message keys of the SWF/endpoint.
+	}
+]]
+encode.new = function(self, hasSpecialRole)
+	return setmetatable({
+		hasSpecialRole = hasSpecialRole,
+		identificationKeys = nil,
+		messageKeys = nil
+	}, self)
+end
+
 do
 	local openssl = require("openssl") -- built-in
 	local sha256 = openssl.digest.get("sha256")
@@ -28,14 +49,14 @@ do
 	end
 
 	local saltBytes = table_writeBytes({
-		247, 026, 166, 222,
-		143, 023, 118, 168,
-		003, 157, 050, 184,
-		161, 086, 178, 169,
-		062, 221, 067, 157,
-		197, 221, 206, 086,
-		211, 183, 164, 005,
-		074, 013, 008, 176
+		0xF7, 0x1A, 0xA6, 0xDE,
+		0x8F, 0x17, 0x76, 0xA8,
+		0x03, 0x9D, 0x32, 0xB8,
+		0xA1, 0x56, 0xB2, 0xA9,
+		0x3E, 0xDD, 0x43, 0x9D,
+		0xC5, 0xDD, 0xCE, 0x56,
+		0xD3, 0xB7, 0xA4, 0x05,
+		0x4A, 0x0D, 0x08, 0xB0
 	})
 
 	local base64_encode = require("base64").encode -- built-in
@@ -45,7 +66,7 @@ do
 		@param password<string> The account's password.
 		@returns string The encrypted password.
 	]]
-	getPasswordHash = function(password)
+	encode.getPasswordHash = function(password)
 		local hash = cryptToSha256(password)
 		hash = cryptToSha256(hash .. saltBytes)
 		local len = #hash
@@ -60,37 +81,29 @@ do
 	end
 end
 
-local identificationKeys = { }
-local messageKeys = { }
-
---[[@
-	@name setPacketKeys
-	@desc Sets the packet keys.
-	@param idKeys<table> The identification keys of the SWF/endpoint.
-	@param msgKeys<table> The message keys of the SWF/endpoint.
-]]
-local setPacketKeys = function(idKeys, msgKeys)
-	identificationKeys = idKeys
-	messageKeys = msgKeys
-end
-
 local xxtea
 do
 	local DELTA, LIM = 0x9E3779B9, 0xFFFFFFFF
 
 	-- Aux function for XXTEA
-	local MX = function(z, y, sum, p, e)
+	local MX = function(identificationKeys, z, y, sum, p, e)
 		-- (((z >> 5) ^ (y << 2)) + ((y >> 3) ^ (z << 4))) ^ ((sum ^ y) + (keys[((p & 3) ^ e) + 1] ^ z))
-		return bitwise_bxor(bitwise_bxor(bitwise_rshift(z, 5), bitwise_lshift(y, 2)) + bitwise_bxor(bitwise_rshift(y, 3), bitwise_lshift(z, 4)), bitwise_bxor(sum, y) + bitwise_bxor(identificationKeys[bitwise_bxor(bitwise_band(p, 3), e) + 1], z))
+		return bitwise_bxor(
+			bitwise_bxor(bitwise_rshift(z, 5), bitwise_lshift(y, 2))
+			+ bitwise_bxor(bitwise_rshift(y, 3), bitwise_lshift(z, 4))
+			, bitwise_bxor(sum, y)
+			+ bitwise_bxor(identificationKeys[bitwise_bxor(bitwise_band(p, 3), e) + 1], z)
+		)
 	end
 
 	--[[@
 		@name xxtea
 		@desc XXTEA partial 64bits encoder.
+		@param self<encode> An Encode object.
 		@param data<table> A table with data to be encoded.
 		@returns table The encoded data.
 	]]
-	xxtea = function(data)
+	xxtea = function(self, data)
 		local decode = #data
 
 		local y = data[1]
@@ -110,7 +123,7 @@ do
 			while p < (decode - 1) do
 				y = data[p + 2]
 
-				z = bitwise_band((data[p + 1] + MX(z, y, sum, p, e)), LIM)
+				z = bitwise_band((data[p + 1] + MX(self.identificationKeys, z, y, sum, p, e)), LIM)
 				data[p + 1] = z
 
 				p = p + 1
@@ -118,41 +131,40 @@ do
 
 			y = data[1]
 
-			z = bitwise_band((data[decode] + MX(z, y, sum, p, e)), LIM)
+			z = bitwise_band((data[decode] + MX(self.identificationKeys, z, y, sum, p, e)), LIM)
 			data[decode] = z
 		end
 
 		return data
 	end
 end
-
 --[[@
 	@name btea
 	@desc Encodes a packet with the BTEA block cipher.
 	@param packet<byteArray> A Byte Array object to be encoded.
 	@returns byteArray The encoded Byte Array object.
 ]]
-local btea = function(packet)
-	local stackLen = #packet.stack
+encode.btea = function(self, packet)
+	local stackLen = packet.stackLen
 
 	if stackLen == 0 then
-		return error("↑failure↓[ENCODE]↑ BTEA algorithm can't be applied to an empty byteArray.", enum.errorLevel.low)
+		return error("↑failure↓[ENCODE]↑ BTEA algorithm can't be applied to an empty byteArray.",
+			enum.errorLevel.low)
 	end
 
 	while stackLen < 8 do
 		stackLen = stackLen + 1
 		packet.stack[stackLen] = 0
 	end
-
 	packet = byteArray:new(packet.stack) -- Saves resource, instead of using write8
 
 	local chunks, counter = { }, 0
-	while #packet.stack > 0 do
+	while packet.stackLen > 0 do
 		counter = counter + 1
 		chunks[counter] = packet:read32()
 	end
 
-	chunks = xxtea(chunks)
+	chunks = xxtea(self, chunks)
 
 	packet:write16(#chunks)
 	for i = 1, #chunks do
@@ -161,28 +173,27 @@ local btea = function(packet)
 
 	return packet
 end
-
 --[[@
 	@name xorCipher
 	@desc Encodes a packet using the XOR cipher.
+	@desc If @self.hasSpecialRole is true, then the raw packet is returned.
 	@param packet<byteArray> A Byte Array object to be encoded.
 	@param fingerprint<int> The fingerprint of the encode.
 	@returns byteArray The encoded Byte Array object.
 ]]
-local xorCipher = function(packet, fingerprint)
+encode.xorCipher = function(self, packet, fingerprint)
+	if self.hasSpecialRole then
+		return packet
+	end
+
 	local stack = { }
 
-	for i = 1, #packet.stack do
+	for i = 1, packet.stackLen do
 		fingerprint = fingerprint + 1
-		stack[i] = bit_band(bit_bxor(packet.stack[i], messageKeys[(fingerprint % 20) + 1]), 255)
+		stack[i] = bit_bxor(packet.stack[i], self.messageKeys[(fingerprint % 20) + 1]) % 256
 	end
 
 	return byteArray:new(stack)
 end
 
-return {
-	getPasswordHash = getPasswordHash,
-	setPacketKeys = setPacketKeys,
-	btea = btea,
-	xorCipher = xorCipher
-}
+return encode
