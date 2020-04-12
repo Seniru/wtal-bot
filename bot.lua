@@ -1,4 +1,4 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -363,7 +363,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
-        --tfm:sendTribeMessage("Connected to tribe chat!")
+        tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
@@ -435,7 +435,7 @@ coroutine.wrap(function()
             printOnlineUsers("discord", member)
         else
             guild:getChannel(enum.channels.tribe_chat):send(
-                ("> **[" .. member .. "]** " .. message):gsub("@here", "@ here"):gsub("@everyone", "@ everyone")
+                ("> **[" .. member .. "]** " .. message):gsub("@here", "@here"):gsub("@everyone", "@|everyone")
             )
         end
 
