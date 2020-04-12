@@ -1,4 +1,4 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -184,17 +184,17 @@ local getProfile = function(name, msg)
                 title = name .. "'s Profile",
                 description = 
                     "**" .. mem.name .. "** \n*«" .. (p.title or "Little mouse") .. 
-                    "»*" .. (mem.rank and "\n\nRank: " .. mem.rank or (p.tribe and "\n\nTribe: " .. p.tribe or "")) ..
-                    (mem.joined and "\nMember since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
-                    "\nGender: " .. p.gender .. 
-                    "\nLevel: " .. (p.level or 1) .. 
-                    (p.birthday and "\nBirthday: " .. p.birthday or "") ..
-                    (p.location and "\nLocation: " .. p.location or "") .. 
-                    (p.soulmate and "\nSoulmate: " .. p.soulmate or "") ..
-                    "\nRegistration date: " .. p.registrationDate ..
-                    "\n\n[Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
-                    "\n[CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                    ("\n[Outfit](" .. p.outfit .. ")"),
+                    "»*" .. (mem.rank and "\n\n:star: Rank: " .. mem.rank or (p.tribe and "\n\n<:tribehouse:689470787950084154> Tribe: " .. p.tribe or "")) ..
+                    (mem.joined and "\n:calendar: Member since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
+                    "\n:male_sign: Gender: " .. p.gender .. 
+                    "\n:crossed_swords: Level: " .. (p.level or 1) .. 
+                    (p.birthday and "\n:birthday: Birthday: " .. p.birthday or "") ..
+                    (p.location and "\n:map: Location: " .. p.location or "") .. 
+                    (p.soulmate and "\n:revolving_hearts: Soulmate: " .. p.soulmate or "") ..
+                    "\n:calendar: Registration date: " .. p.registrationDate ..
+                    "\n\n[<:a801:689472184229691472> Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
+                    "\n[<:cheese:691158951563362314> CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
+                    ("\n[<:dance:689471806624628806> Outfit](" .. p.outfit .. ")"),
                 thumbnail = {url = p.avatarUrl},
                 color = 0x2987ba          
             }
@@ -363,7 +363,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
-        tfm:sendTribeMessage("Connected to tribe chat!")
+        --tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
@@ -435,7 +435,7 @@ coroutine.wrap(function()
             printOnlineUsers("discord", member)
         else
             guild:getChannel(enum.channels.tribe_chat):send(
-                ("> **[" .. member .. "]** " .. message):gsub("@here", "@here"):gsub("@everyone", "@|everyone")
+                ("> **[" .. member .. "]** " .. message):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
             )
         end
 
@@ -512,8 +512,10 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
-        tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        getMembers()
+        --tfm:handlePlayers(true)
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
