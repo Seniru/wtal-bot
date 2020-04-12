@@ -363,7 +363,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
-        tfm:sendTribeMessage("Connected to tribe chat!")
+        --tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
@@ -455,7 +455,7 @@ coroutine.wrap(function()
                 guild:getChannel(enum.channels.general_chat):send(verificationKeys[key].mentionString )
                 guild:getChannel(enum.channels.general_chat):send {
                     embed = {
-                        description = "Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･\nSay hi and introduce yourself to others. Also heads onto <#620437243944763412> to add some roles!",
+                        description = "Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\nWe hope you enjoy your stay here :smile:",
                         color = 0x22ff22                        
                     }
                 }
@@ -506,6 +506,12 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
+        guild:getChannel(enum.channels.general_chat):send {
+                    embed = {
+                        description = "**Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･**\n\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\n\nWe hope you enjoy your stay here :smile:",
+                        color = 0x22ff22                        
+                    }
+                }
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
