@@ -366,7 +366,7 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
-        --tfm:sendTribeMessage("Connected to tribe chat!")
+        tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
