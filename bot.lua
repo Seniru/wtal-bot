@@ -1,4 +1,4 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -430,11 +430,15 @@ coroutine.wrap(function()
     end)
 
     tfm:on("tribeMessage", function(member, message)
+        
         if message == "!who" then
             printOnlineUsers("discord", member)
         else
-            guild:getChannel(enum.channels.tribe_chat):send("> **[" .. member .. "]** " .. message)
+            guild:getChannel(enum.channels.tribe_chat):send(
+                ("> **[" .. member .. "]** " .. message):gsub("@here", "@ here"):gsub("@everyone", "@ everyone")
+            )
         end
+
         if not onlineMembers[member] then
             onlineCount = onlineCount + 1
             onlineMembers[member] = true
@@ -455,7 +459,7 @@ coroutine.wrap(function()
                 guild:getChannel(enum.channels.general_chat):send(verificationKeys[key].mentionString )
                 guild:getChannel(enum.channels.general_chat):send {
                     embed = {
-                        description = "Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\nWe hope you enjoy your stay here :smile:",
+                        description = "**Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･**\n\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\n\nWe hope you enjoy your stay here :smile:",
                         color = 0x22ff22                        
                     }
                 }
@@ -506,12 +510,6 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
-        guild:getChannel(enum.channels.general_chat):send {
-                    embed = {
-                        description = "**Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･**\n\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\n\nWe hope you enjoy your stay here :smile:",
-                        color = 0x22ff22                        
-                    }
-                }
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
