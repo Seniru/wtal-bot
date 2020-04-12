@@ -119,12 +119,18 @@ local encodeUrl = function(url)
 	return '%' .. table.concat(out, '%')
 end
 
-local reply = function(name)
-    local res = ""
+local reply = function(author, target)
     xpcall(function()
         print("Requesting useless facts...")
         local head, body = http.request('GET', 'https://uselessfacts.jsph.pl/random.md?language=en', {{ "user-agent", 'Seniru' }})
-        res = hi[math.random(1, #hi)] .. " " .. name .. "! Wanna hear a fact?\n" .. body
+        target:send(author.mentionString)
+        target:send {
+            embed = {
+                title = hi[math.random(1, #hi)] .. "! Wanna hear a fact? :bulb:",
+                description = body,
+                color = 0x2987ba
+            }
+        }
         print("Request completed!")
     end, function() print("Request failed!") res = "Oops! An error occured!" end)
     return res
@@ -526,7 +532,7 @@ coroutine.wrap(function()
             msg:reply('Pong!')
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
-            msg:reply(reply(msg.author.mentionString))
+            reply(msg.author, msg.channel)
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)            
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
