@@ -91,7 +91,7 @@ qotd.isInCooldown = function(http, json)
     return xpcall(function()
         local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
         local res = json.parse(body)["last-post"]
-        return os.time() < res + 1 * 60 * 60 * 24
+        return os.time() < (res + 1 * 60 * 60 * 24)
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
     end)

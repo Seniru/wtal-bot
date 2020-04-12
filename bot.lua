@@ -1,4 +1,4 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -33,8 +33,11 @@ local attempts = 5
 
 loop = function()
     tfm:playEmoticon(math.random(0, 9))
-    if not qotd.isInCooldown(http, json) then
+    local _, inCooldown = qotd.isInCooldown(http, json)
+    if not inCooldown then
         askQuestion(guild:getMember(discord.user.id))
+    else
+        print("[QOTD] In cooldown")
     end
     timer.setTimeout(1000 * 60 * (testing and 1 or 15), coroutine.wrap(loop))
 end
@@ -512,10 +515,8 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
-        forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
-        getMembers()
-        --tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        tfm:handlePlayers(true)
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
     end)
 
     discord:on('messageCreate', function(msg)
