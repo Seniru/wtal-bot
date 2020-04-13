@@ -360,6 +360,22 @@ getQuestionQueue = function(target)
     }
 end
 
+local normalizeMessage = function(body)
+    return body
+        :gsub("<(:%w+:)%d+>", "%1") -- normalizing emojis
+        :gsub("<#(%d+)>", function(channelId) -- normalizing channels
+            return "#" .. guild:getChannel(channelId).name 
+        end)
+        :gsub("<@([!&])(%d+)>", function(mentionType, mentioned) -- normalizing channel and role mentions
+            if mentionType == "!" then -- member mention
+                return "@" .. guild:getMember(mentioned).name
+            elseif mentionType == "&" then -- role mention
+                return "@" .. guild:getRole(mentioned).name
+            end
+        end)
+end
+
+
 coroutine.wrap(function()
     
     --[[Transfromage events]]
@@ -548,7 +564,10 @@ coroutine.wrap(function()
             if msg.content:find("^`.+`$") and count == 2 then
                 local cont = msg.content:gsub("`+", "")
                 tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
+            elseif msg.content:find("^>%s*tc?%s+.+$") then
+                tfm:sendTribeMessage(normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
             end
+        
         -- verification
         elseif msg.content:lower() == "> verify" then
             sendVerificationKey(msg.member, msg.channel, false)
