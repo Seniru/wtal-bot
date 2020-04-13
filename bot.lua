@@ -364,13 +364,16 @@ local normalizeMessage = function(body)
     return body
         :gsub("<(:%w+:)%d+>", "%1") -- normalizing emojis
         :gsub("<#(%d+)>", function(channelId) -- normalizing channels
-            return "#" .. guild:getChannel(channelId).name 
+            local channel = guild:getChannel(channelId)
+            return channel and "#" .. channel.name or nil
         end)
         :gsub("<@([!&])(%d+)>", function(mentionType, mentioned) -- normalizing channel and role mentions
             if mentionType == "!" then -- member mention
-                return "@" .. guild:getMember(mentioned).name
+                local member = guild:getMember(mentioned) 
+                return member and "@" .. member.name or nil
             elseif mentionType == "&" then -- role mention
-                return "@" .. guild:getRole(mentioned).name
+                local role = guild:getRole(mentioned)
+                return role and "@" .. role.name or nil
             end
         end)
 end
@@ -565,7 +568,7 @@ coroutine.wrap(function()
                 local cont = msg.content:gsub("`+", "")
                 tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
             elseif msg.content:find("^>%s*tc?%s+.+$") then
-                tfm:sendTribeMessage(normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
+                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
             end
         
         -- verification
