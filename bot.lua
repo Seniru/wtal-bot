@@ -18,6 +18,7 @@ local discord = discordia.Client({
 local forums = fromage()
 local tfm = transfromage.client:new()
 local tfmEnum = transfromage.enum
+local byteArray = transfromage.byteArray
 
 local guild = nil
 local updated = false
@@ -421,9 +422,9 @@ coroutine.wrap(function()
         tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
+        tfm:changeTribeGreeting("Hello world")
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
-        tfm:changeTribeGreeting("Hello world")
         --loop()
     end)
 
