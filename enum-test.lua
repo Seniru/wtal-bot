@@ -40,7 +40,8 @@ local enum = {
         ['Verified']            = {id = '678489558240722975'},
         ['manager']             = {id = '678490153412460594'},
         ['member']              = {id = '678508865926594561'}
-    }
+    },
+    totalRanks = 28
 }
 
 return enum

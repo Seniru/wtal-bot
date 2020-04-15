@@ -1,4 +1,4 @@
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -17,6 +17,7 @@ local discord = discordia.Client({
 
 local forums = fromage()
 local tfm = transfromage.client:new()
+local tfmEnum = transfromage.enum
 
 local guild = nil
 local updated = false
@@ -203,9 +204,9 @@ local getProfile = function(name, msg)
                     "\n:calendar: Registration date: " .. p.registrationDate ..
                     "\n\n[<:a801:689472184229691472> Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[<:cheese:691158951563362314> CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
-                    ("\n[<:dance:689471806624628806> Outfit](" .. p.outfit .. ")"),
+                    (p.outfit and "\n[<:dance:689471806624628806> Outfit](" .. p.outfit .. ")" or ""),
                 thumbnail = {url = p.avatarUrl},
-                color = 0x2987ba          
+                color = 0x2987ba     
             }
         }
     end, function(err) print("Error occured: " .. err) end)
@@ -360,6 +361,26 @@ getQuestionQueue = function(target)
     }
 end
 
+-- moderation functions
+
+changeRank = function(member, rank, msg)
+    if msg.member:hasRole(enum.roles["manager"].id) then
+        if not members[member] then
+            return msg:reply("Cannot find the member ¯\\_(ツ)_/¯")
+        elseif (not enum.roles[rank]) or (not enum.roles[rank].index) then
+            return msg:reply("Rank is not valid!")
+        else
+            local rankId = enum.totalRanks - enum.roles[rank].index - 1
+            tfm:setTribeMemberRole(member, rankId)
+            members[member].rank = rank
+            msg:reply("Succesfully changed the rank of " .. member .. " to " .. rank .. " (id: " .. rankId .. ")")
+            tfm:sendTribeMessage("Set by " .. msg.member.name)
+        end
+    else
+        msg:reply("You are not permitted to do this action")
+    end
+end
+
 local normalizeMessage = function(body)
     return body
         :gsub("<(:%w+:)%d+>", "%1") -- normalizing emojis
@@ -378,6 +399,12 @@ local normalizeMessage = function(body)
         end)
 end
 
+-- transfromage functions
+tfm.changeTribeGreeting = function(self, greeting)
+    self.main:send(tfmEnum.identifier.bulle, self._encode:xorCipher(
+        byteArray:new():write16(98):write32(1):writeUTF(message), self.main.packetID)
+    )
+end
 
 coroutine.wrap(function()
     
@@ -396,7 +423,8 @@ coroutine.wrap(function()
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
-        loop()
+        tfm:changeTribeGreeting("Hello world")
+        --loop()
     end)
 
     tfm:on("connectionFailed", function()
@@ -533,6 +561,10 @@ coroutine.wrap(function()
         end
     end)
 
+    tfm:on("tribeMemberGetRole", function(member, setter, role)
+        guild:getChannel(enum.channels.tribe_chat):send("> " .. setter .. " has changed the rank of " .. member .. " to " .. role .. ".")
+    end)
+
 
     --[[ Discord events]]
 
@@ -561,17 +593,7 @@ coroutine.wrap(function()
         -- online users
         elseif msg.content:find("^>%s*who%s*$") then
             printOnlineUsers("tfm", msg.channel)
-        -- tribe chat
-        elseif msg.channel.id == enum.channels.tribe_chat then
-            _, count = msg.content:gsub("`", "")
-            if msg.content:find("^`.+`$") and count == 2 then
-                local cont = msg.content:gsub("`+", "")
-                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
-            elseif msg.content:find("^>%s*tc?%s+.+$") then
-                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
-            end
-        
-        -- verification
+            -- verification
         elseif msg.content:lower() == "> verify" then
             sendVerificationKey(msg.member, msg.channel, false)
         elseif msg.content:lower() == "> verify force" then
@@ -587,7 +609,7 @@ coroutine.wrap(function()
             getQuestionQueue(msg.channel)
         elseif msg.content:find("^>%s*qotd delete.*$") then
             deleteQuestion(msg.content:match("^>%s*qotd delete (%d+)$"), msg.member, msg.channel)
-        -- restart command
+            -- restart command
         elseif msg.content:lower() == "> restart" then
             if msg.member:hasRole(enum.roles["manager"].id) then
                 msg:reply("Restarting the bot...")
@@ -595,10 +617,22 @@ coroutine.wrap(function()
             else
                 msg:reply("You don't have enough permissions to do this action!")
             end
+        -- mod commands
+        elseif msg.content:find("^>%s*setrank%s+.+$") then
+            local member, rank = msg.content:match("^>%s*setrank%s+(%+?.-#%d+)%s+(.+)")
+            changeRank(member, rank, msg)
+        -- tribe chat
+        elseif msg.channel.id == enum.channels.tribe_chat then
+            _, count = msg.content:gsub("`", "")
+            if msg.content:find("^`.+`$") and count == 2 then
+                local cont = msg.content:gsub("`+", "")
+                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. cont)
+            elseif msg.content:find("^>%s*tc?%s+.+$") then
+                tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
+            end
         end
-
     end)
-
+    
     discord:on('memberJoin', function(member)
         guild:getChannel(enum.channels.lobby):send(member.user.mentionString)
         guild:getChannel(enum.channels.lobby):send { 
