@@ -403,7 +403,7 @@ end
 -- transfromage functions
 tfm.changeTribeGreeting = function(self, greeting)
     self.main:send(tfmEnum.identifier.bulle, self._encode:xorCipher(
-        byteArray:new():write16(98):write32(1):writeUTF(message), self.main.packetID)
+        byteArray:new():write16(98):write32(1):writeUTF(greeting), self.main.packetID)
     )
 end
 
