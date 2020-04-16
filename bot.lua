@@ -621,5 +621,13 @@ coroutine.wrap(function()
     end)
 end)()
 
+math.randomseed(os.time())
+responses = {
+  "Yes",
+  "No",
+}
+
+elseif msg.content == "> 8ball" then
+    msg:reply(responses[math.random(1, #responses)])
 
 discord:run('Bot ' .. os.getenv('DISCORD'))
