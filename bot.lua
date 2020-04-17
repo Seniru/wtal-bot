@@ -526,7 +526,8 @@ coroutine.wrap(function()
                         {name = "Reason", value = reason},
                         {name = "Reporter", value = member}
                     },
-                    footer = "Reported at: " .. os.date() .. " (+00:00 GMT)"
+                    --footer = "Reported at: " .. os.date() .. " (+00:00 GMT)",
+                    color = 0xffcc33
                 }
             }
         else
