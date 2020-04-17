@@ -413,7 +413,7 @@ local reportMember = function(accused, reason, reporter)
             title = ":closed_book: Report",
             fields = {
                 {name = "Accused",  value = accused},
-                {name = "Reason", value = reason},
+                {name = "Reason", value = reason or "No reason provided"},
                 {name = "Reporter", value = reporter}
             },
             footer = {
