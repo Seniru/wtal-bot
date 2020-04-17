@@ -407,6 +407,24 @@ kickMember = function(member, msg)
     end
 end
 
+local reportMember = function(accused, reason, reporter)
+    guild:getChannel(enum.channels.admin_chat):send {
+        embed = {
+            title = ":closed_book: Report",
+            fields = {
+                {name = "Accused",  value = accused},
+                {name = "Reason", value = reason},
+                {name = "Reporter", value = reporter}
+            },
+            footer = {
+                text = "Reported at: " .. os.date() .. " (+00:00 GMT)"
+            },                        
+            color = 0xffcc33
+        }
+    }
+    tfm:sendTribeMessage("Reported the member!")
+end
+
 local normalizeMessage = function(body)
     return body
         :gsub("<(:%w+:)%d+>", "%1") -- normalizing emojis
@@ -514,22 +532,9 @@ coroutine.wrap(function()
         
         if message == "!who" then
             printOnlineUsers("discord", member)
-        elseif message:find("^!report .-#%d+ .+") then
-            local reported, reason = message:match("^!report (.-#%d+) (.+)")
-            print(reported)
-            print(reason)
-            guild:getChannel(enum.channels.admin_chat):send {
-                embed = {
-                    title = ":closed_book: Report",
-                    fields = {
-                        {name = "Accused",  value = reported},
-                        {name = "Reason", value = reason},
-                        {name = "Reporter", value = member}
-                    },
-                    --footer = "Reported at: " .. os.date() .. " (+00:00 GMT)",
-                    color = 0xffcc33
-                }
-            }
+        elseif message:find("^!report .-#%d+ .*") then
+            local reported, reason = message:match("^!report (.-#%d+) (.*)")
+            reportMember(reported, reason, member)            
         else
             guild:getChannel(enum.channels.tribe_chat):send(
                 ("> **[" .. member .. "]** " .. message):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
