@@ -1,3 +1,5 @@
+math.randomseed(os.time())
+
 local testing = false
 --Depenendencies--
 local discordia = require('discordia')
@@ -549,6 +551,8 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+		elseif msg.content == "> 8ball" then
+    		msg:reply(({"Yes", "No"})[math.random(2)])
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
@@ -620,14 +624,5 @@ coroutine.wrap(function()
         end
     end)
 end)()
-
-math.randomseed(os.time())
-responses = {
-  "Yes",
-  "No",
-}
-
-elseif msg.content == "> 8ball" then
-    msg:reply(responses[math.random(1, #responses)])
 
 discord:run('Bot ' .. os.getenv('DISCORD'))
