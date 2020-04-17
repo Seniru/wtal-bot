@@ -532,8 +532,8 @@ coroutine.wrap(function()
         
         if message == "!who" then
             printOnlineUsers("discord", member)
-        elseif message:find("^!report .-#%d+ .*") then
-            local reported, reason = message:match("^!report (.-#%d+) (.*)")
+        elseif message:find("^!report .-#%d+%s?.*") then
+            local reported, reason = message:match("^!report (.-#%d+)%s?(.*)")
             reportMember(reported, reason, member)            
         else
             guild:getChannel(enum.channels.tribe_chat):send(
