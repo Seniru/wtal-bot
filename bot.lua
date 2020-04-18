@@ -461,26 +461,13 @@ local getWarnings = function(member, target)
         if not success then
             tfm:sendWhisper(target, "An error occurred")
         else
-            local out = ""
-            print("sending warnings")
             tfm:sendWhisper(target, "Warnings of " .. member)
             if (not res) or count == 0 then
-                print("no warnings")
                 tfm:sendWhisper(target, "No warnings")
             else
-                print("iterating through warnings")
                 for _, warning in next, res do
-                    out = out .. "\n• " .. warning
-                    print(out)
-                    if out:len() > 230 then
-                        print("flushing")
-                        tfm:sendWhisper(target, "1" .. tostring(out))
-                        out = ""
-                    end
+                    tfm:sendWhisper("• " .. warning)
                 end
-                print("here")
-                tfm:sendWhisper(target, "hello world" .. tostring(out))
-                print("and the end@")
                 tfm:sendWhisper(target, "Total warnings: " .. count)
             end
         end
@@ -499,6 +486,47 @@ local getWarnings = function(member, target)
                 }
             }
         end
+    end
+end
+
+local blacklistPlayer = function(member, message)
+    if message.member:hasRole(enum.roles["manager"].id) then
+        if not members[member] then
+            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
+        else
+            modsys.blacklistPlayer(member, http, json)
+            message:reply("Blacklisted " .. member)
+        end
+    else
+        message:reply("You are not permitted to this action")
+    end
+end
+
+local whitelistPlayer = function(member, message)
+    if message.member:hasRole(enum.roles["manager"].id) then
+        if not members[member] then
+            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
+        else
+            modsys.whitelistPlayer(member, http, json)
+            message:reply("Whitelisted " .. member)
+        end
+    else
+        message:reply("You are not permitted to this action")
+    end
+end
+
+local getBlacklist = function(target)
+    local success, list = modsys.getBlacklist(http, json)
+    if not success then
+        target:send("An error occured!")
+    else
+        target:send {
+            embed = {
+                title = ":skull: Blacklist",
+                description = (list and #list > 0) and "• " .. table.concat(list, "\n• ") .. "\n" or "Blacklist is empty!\n",
+                color = 0x000000
+            }
+        }
     end
 end
 
@@ -768,6 +796,14 @@ coroutine.wrap(function()
         elseif msg.content:find("^>%s*rwarn%s+.+$") then
             local member, id = msg.content:match("^>%s*rwarn%s+(%+?.-#%d+)%s+(%d+)")
             removeWarning(member, tonumber(id), msg)
+        elseif  msg.content:find("^>%s*blacklist$") then
+            getBlacklist(msg.channel)
+        elseif msg.content:find("^>%s*blacklist%s+.+$") then
+            local member = msg.content:match("^>%s*blacklist%s+(.+)")
+            blacklistPlayer(member, msg)
+        elseif msg.content:find("^>%s*whitelist%s+.+$") then
+            local member = msg.content:match("^>%s*whitelist%s+(.+)")
+            whitelistPlayer(member, msg)
         -- tribe chat
         elseif msg.channel.id == enum.channels.tribe_chat then
             _, count = msg.content:gsub("`", "")

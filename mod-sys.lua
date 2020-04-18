@@ -62,4 +62,61 @@ modsys.getWarnings = function(member, http, json)
     end)
 end
 
+modsys.blacklistPlayer = function(member, http, json)
+    return xpcall(function()
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local res = json.parse(body)
+        res.blacklist[member] = true
+        http.request("PUT", JSON_BIN_ENDPOINT, {
+            {"Content-Type", "application/json"},
+            {"secret-key", JSON_BIN_SECRET},
+            {"versioning", "false"}
+        }, json.stringify(res))
+    end, function(err)
+        print("An error occured in the endpoint\nErr: " .. err)
+        return "An error occured in the endpoint"
+    end)
+end
+
+modsys.whitelistPlayer = function(member, http, json)
+    return xpcall(function()
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local res = json.parse(body)
+        res.blacklist[member] = nil
+        http.request("PUT", JSON_BIN_ENDPOINT, {
+            {"Content-Type", "application/json"},
+            {"secret-key", JSON_BIN_SECRET},
+            {"versioning", "false"}
+        }, json.stringify(res))     
+    end, function(err)
+        print("An error occured in the endpoint\nErr: " .. err)
+        return "An error occured in the endpoint"
+    end)
+end
+
+modsys.getBlacklist = function(http, json)
+    return xpcall(function()
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local res = json.parse(body)    
+        local list = {}
+        for name, listed in next, res.blacklist do
+            list[#list + 1] = name
+        end
+        return list
+    end, function(err)
+        print("An error occured in the endpoint\nErr: " .. err)
+        return {}
+    end)
+end
+
+modsys.isBlacklisted = function(member, http, json)
+    return xpcall(function()
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-keys", JSON_BIN_SECRET}})
+        return not not body.blacklist[member]
+    end, function(err)
+        print("An error occured in the endpoint\nErr: " .. err)
+        return false
+    end)
+end
+
 return modsys
