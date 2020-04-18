@@ -481,7 +481,7 @@ local getWarnings = function(member, target)
                 print("here")
                 tfm:sendWhisper(target, "hello world" .. tostring(out))
                 print("and the end@")
-                tfm:sendWhisper(tasrget, "Total warnings: " .. count)
+                tfm:sendWhisper(target, "Total warnings: " .. count)
             end
         end
     else
