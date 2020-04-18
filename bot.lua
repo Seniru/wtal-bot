@@ -9,6 +9,7 @@ local json = require('json')
 local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
 local qotd = require('qotd-client')
+local modsys = require('mod-sys')
 local md5 = require('md5')
 
 local discord = discordia.Client({
@@ -367,7 +368,7 @@ end
 changeRank = function(member, rank, msg)
     if msg.member:hasRole(enum.roles["manager"].id) then
         if not members[member] then
-            return msg:reply("Cannot find the member ¯\\_(ツ)_/¯")
+            return msg:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
         elseif (not enum.roles[rank]) or (not enum.roles[rank].index) then
             return msg:reply("Rank is not valid!")
         else
@@ -423,6 +424,82 @@ local reportMember = function(accused, reason, reporter)
         }
     }
     tfm:sendTribeMessage("Reported the member!")
+end
+
+local warnMember = function(member, reason, message)
+    if message.member:hasRole(enum.roles["manager"].id) then
+        if not members[member] then
+            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
+        else
+            modsys.warnMember(member, reason, http, json)
+            tfm:sendWhisper(member, "You have been warned!")
+            tfm:sendWhisper(member, "Reason: " .. reason)
+            message:reply("Warned the member")
+        end
+    else
+        message:reply("You are not permitted to do this action!")
+    end
+end
+
+local removeWarning = function(member, id, message)
+    if message.member:hasRole(enum.roles["manager"].id) then
+        if not members[member] then
+            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
+        else
+            modsys.removeWarning(member, id, http, json)
+            message:reply("Removed the warning #" .. id .. " of " .. member)
+        end
+    else
+        message:reply("You are not permitted to this action")
+    end
+end
+
+local getWarnings = function(member, target)
+        
+    local success, res, count = modsys.getWarnings(member, http, json)
+    if type(target) == "string" then -- requests from tfm
+        if not success then
+            tfm:sendWhisper(target, "An error occurred")
+        else
+            local out = ""
+            print("sending warnings")
+            tfm:sendWhisper(target, "Warnings of " .. member)
+            if (not res) or count == 0 then
+                print("no warnings")
+                tfm:sendWhisper(target, "No warnings")
+            else
+                print("iterating through warnings")
+                for _, warning in next, res do
+                    out = out .. "\n• " .. warning
+                    print(out)
+                    if out:len() > 230 then
+                        print("flushing")
+                        tfm:sendWhisper(target, "1")
+                        out = ""
+                    end
+                end
+                print("here")
+                tfm:sendWhisper(target, out or "")
+                print("and the end@")
+                tfm:sendWhisper(tasrget, "Total warnings: " .. count)
+            end
+        end
+    else
+        if not success then
+            target:reply("An error occured!")
+        else
+            target:reply {
+                embed = {
+                    title = "Warnings of " .. member,
+                    description = res and "• " .. table.concat(res, "\n• ") .. "\n" or "No warnings!\n",
+                    footer = {
+                        text = "Total Warnings: " .. count
+                    },
+                    color = 0x2987ba
+                }
+            }
+        end
+    end
 end
 
 local normalizeMessage = function(body)
@@ -534,7 +611,9 @@ coroutine.wrap(function()
             printOnlineUsers("discord", member)
         elseif message:find("^!report .-#%d+%s?.*") then
             local reported, reason = message:match("^!report (.-#%d+)%s?(.*)")
-            reportMember(reported, reason, member)            
+            reportMember(reported, ((reason == nil or reason == "") and "No reason provided" or reason), member)            
+        elseif message:find("^!warnings .-#%d+") then
+            getWarnings(message:match("^!warnings (.-#%d+)"), member)
         else
             guild:getChannel(enum.channels.tribe_chat):send(
                 ("> **[" .. member .. "]** " .. message):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
@@ -624,6 +703,7 @@ coroutine.wrap(function()
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --getMembers()
     end)
 
     discord:on('messageCreate', function(msg)
@@ -631,6 +711,10 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+        elseif msg.content == "> json" then
+            local _, json = modsys.getJSON(http)
+            msg:reply("```json\n" .. json .. "\n```")
+            -- todo: remove this
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
@@ -675,6 +759,15 @@ coroutine.wrap(function()
             changeGreeting(msg.content:match("^>%s*setmsg%s+(.+)"), msg)
         elseif msg.content:find("^>%s*kick%s+.+$") then
             kickMember(msg.content:match("^>%s*kick%s+(.+)"), msg)
+        elseif msg.content:find("^>%s*warn%s+.*$") then
+            local member, reason = msg.content:match("^>%s*warn%s+(%+?.-#%d+)%s*(.*)")
+            reason = (reason == nil or reason == "") and "No reason provided" or reason
+            warnMember(member, reason, msg)
+        elseif msg.content:find("^>%s*warnings%s+.+$") then
+            getWarnings(msg.content:match("^>%s*warnings%s+(.+)"), msg)
+        elseif msg.content:find("^>%s*rwarn%s+.+$") then
+            local member, id = msg.content:match("^>%s*rwarn%s+(%+?.-#%d+)%s+(%d+)")
+            removeWarning(member, tonumber(id), msg)
         -- tribe chat
         elseif msg.channel.id == enum.channels.tribe_chat then
             _, count = msg.content:gsub("`", "")
