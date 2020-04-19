@@ -466,7 +466,7 @@ local getWarnings = function(member, target)
                 tfm:sendWhisper(target, "No warnings")
             else
                 for _, warning in next, res do
-                    tfm:sendWhisper("• " .. warning)
+                    tfm:sendWhisper(target, "• " .. warning)
                 end
                 tfm:sendWhisper(target, "Total warnings: " .. count)
             end
