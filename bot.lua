@@ -496,6 +496,8 @@ local blacklistPlayer = function(member, message)
         else
             modsys.blacklistPlayer(member, http, json)
             message:reply("Blacklisted " .. member)
+            tfm:kickTribeMember(member)
+            tfm:sendTribeMessage(member .. " has been blacklisted, please do not invite them back!")
         end
     else
         message:reply("You are not permitted to this action")
@@ -608,13 +610,18 @@ coroutine.wrap(function()
     end)
 
     tfm:on("newTribeMember", function(member)
-        tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
-        members[member] = {rank='Stooge', joined=os.time(), name=member}
-        setRank(member, true)
-		onlineMembers[member] = true
-        onlineCount = onlineCount + 1
-        totalMembers = totalMembers + 1
-        discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        if modsys.isBlacklisted(member) then
+            tfm:kickTribeMember(member)
+            tfm:sendTribeMessage(member .. " is in the blacklist! Please do not invite them back")
+        else
+            tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
+            members[member] = {rank='Stooge', joined=os.time(), name=member}
+            setRank(member, true)
+		    onlineMembers[member] = true
+            onlineCount = onlineCount + 1
+            totalMembers = totalMembers + 1
+            discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
+        end
     end)
 
     tfm:on("tribeMemberLeave", function(member)
@@ -742,6 +749,9 @@ coroutine.wrap(function()
         elseif msg.content == "> json" then
             local _, json = modsys.getJSON(http)
             msg:reply("```json\n" .. json .. "\n```")
+        elseif msg.content == "> test" then
+            local _, blacklisted = modsys.isBlacklisted("Aaaaaa#4087", http, json)
+            msg:reply(blacklisted and "Blacklisted" or "Not")
             -- todo: remove this
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then

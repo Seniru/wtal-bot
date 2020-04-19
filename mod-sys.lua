@@ -111,8 +111,9 @@ end
 
 modsys.isBlacklisted = function(member, http, json)
     return xpcall(function()
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-keys", JSON_BIN_SECRET}})
-        return not not body.blacklist[member]
+        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local res = json.parse(body)
+        return not not res.blacklist[member]
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
         return false
