@@ -610,7 +610,7 @@ coroutine.wrap(function()
     end)
 
     tfm:on("newTribeMember", function(member)
-        if modsys.isBlacklisted(member) then
+        if modsys.isBlacklisted(member, http, json) then
             tfm:kickTribeMember(member)
             tfm:sendTribeMessage(member .. " is in the blacklist! Please do not invite them back")
         else
