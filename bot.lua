@@ -554,7 +554,7 @@ coroutine.wrap(function()
 		elseif msg.content == "> 8ball" then
     		msg:reply(({"Yes", "No"})[math.random(2)])
         -- profile command
-        elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
+        elseif mentioned:count() == 1 and msg.author.id ~= "654987403890524160" and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)
