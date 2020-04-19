@@ -1,3 +1,5 @@
+math.randomseed(os.time())
+
 local testing = false
 --Depenendencies--
 local discordia = require('discordia')
@@ -44,7 +46,7 @@ end
 
 local getStoredName = function(name, memberList)
     memberList = memberList or members
-    for n, r in next, memberList do             
+    for n, r in next, memberList do
         if not not n:find(name .. '#?%d*') then
             return n
         end
@@ -68,7 +70,7 @@ setRank = function(member, fromTfm)
             local rank = data.rank
             if name:lower():find(member.name:lower() .. '#?%d*') then
                 print('Found member mathcing the given instance')
-                print('Removing existing rank')            
+                print('Removing existing rank')
                 removeRanks(member)
                 print('Adding the new rank \'' .. rank .. '\'')
                 member:addRole(enum.roles[rank].id)
@@ -79,7 +81,7 @@ setRank = function(member, fromTfm)
         member:addRole(enum.roles['Passer-by'].id)
     elseif fromTfm and updated then
         print('Setting rank of ' .. member)
-        for k, v in pairs(guild.members) do      
+        for k, v in pairs(guild.members) do
             if member:find(v.name .. '#?%d*') then
                 setRank(v, false)
             end
@@ -145,12 +147,12 @@ local getProfile = function(name, msg)
         name = formatName(name)
         print('> p ' .. name)
         local mem = members[getStoredName(name)]
-        
+
         -- setting member name to the name given if the member is not in the tribe
         if not mem then
             if name:find("#%d%d%d%d") then
                 mem = {name = name}
-            else 
+            else
                 mem = {name = name .. "#0000"}
             end
         end
@@ -179,7 +181,7 @@ local getProfile = function(name, msg)
         soulFname, souldisc = a801p:match("nom%-utilisateur%-scindable\">.->%s*(.-)<.-hashtag%-pseudo\"> #(%d+)</span>")
         p.soulmate = soulFname and (soulFname .. "#" .. souldisc) or nil
         p.avatarUrl = a801p:match("(http://avatars%.atelier801%.com/%d+/(%d+)%.%a+)")
-        
+
         --extracting data from html chunk
         p.title = cfm:match("«(.+)»")
         p.title = encodeUrl(p.title or 'Little mouse')
@@ -191,21 +193,21 @@ local getProfile = function(name, msg)
         msg.channel:send {
             embed = {
                 title = name .. "'s Profile",
-                description = 
-                    "**" .. mem.name .. "** \n*«" .. (p.title or "Little mouse") .. 
+                description =
+                    "**" .. mem.name .. "** \n*«" .. (p.title or "Little mouse") ..
                     "»*" .. (mem.rank and "\n\n:star: Rank: " .. mem.rank or (p.tribe and "\n\n<:tribehouse:689470787950084154> Tribe: " .. p.tribe or "")) ..
-                    (mem.joined and "\n:calendar: Member since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") .. 
-                    "\n:male_sign: Gender: " .. p.gender .. 
-                    "\n:crossed_swords: Level: " .. (p.level or 1) .. 
+                    (mem.joined and "\n:calendar: Member since: " .. os.date('%d-%m-%Y %H:%M',mem.joined) or "") ..
+                    "\n:male_sign: Gender: " .. p.gender ..
+                    "\n:crossed_swords: Level: " .. (p.level or 1) ..
                     (p.birthday and "\n:birthday: Birthday: " .. p.birthday or "") ..
-                    (p.location and "\n:map: Location: " .. p.location or "") .. 
+                    (p.location and "\n:map: Location: " .. p.location or "") ..
                     (p.soulmate and "\n:revolving_hearts: Soulmate: " .. p.soulmate or "") ..
                     "\n:calendar: Registration date: " .. p.registrationDate ..
                     "\n\n[<:a801:689472184229691472> Forum Profile](https://atelier801.com/profile?pr=" .. fName .. "%23" .. disc ..")" ..
                     "\n[<:cheese:691158951563362314> CFM Profile](https://cheese.formice.com/transformice/mouse/" .. fName .. "%23" .. disc .. ")" ..
                     ("\n[<:dance:689471806624628806> Outfit](" .. p.outfit .. ")"),
                 thumbnail = {url = p.avatarUrl},
-                color = 0x2987ba          
+                color = 0x2987ba
             }
         }
     end, function(err) print("Error occured: " .. err) end)
@@ -234,13 +236,13 @@ local printOnlineUsers = function(from, target)
         table.sort(orderedRanks, function(e1, e2)
             return e1.index < e2.index
         end)
-        
+
         for _, data in next, orderedRanks do
             if online[data.rank] then
                 res = res .. "\n\n**" .. data.rank .. "**" .. online[data.rank]
             end
         end
-      
+
         target:send {
             embed = {
                 title = "Online members from transformice",
@@ -331,7 +333,7 @@ end
 
 deleteQuestion = function(question, member, target)
     -- validation
-    if not member:hasRole(enum.roles["manager"].id) then    
+    if not member:hasRole(enum.roles["manager"].id) then
         target:send("You are not permitted to this action!")
     elseif question == nil or question:find("^%s$*") then
         target:send("You must provide a valid number as the argument!")
@@ -369,7 +371,7 @@ local normalizeMessage = function(body)
         end)
         :gsub("<@([!&])(%d+)>", function(mentionType, mentioned) -- normalizing channel and role mentions
             if mentionType == "!" then -- member mention
-                local member = guild:getMember(mentioned) 
+                local member = guild:getMember(mentioned)
                 return member and "@" .. member.name or nil
             elseif mentionType == "&" then -- role mention
                 local role = guild:getRole(mentioned)
@@ -380,14 +382,14 @@ end
 
 
 coroutine.wrap(function()
-    
+
     --[[Transfromage events]]
 
     tfm:once("ready", function()
         print('Logging into transformice...')
 	    tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
     end)
-    
+
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
@@ -458,7 +460,7 @@ coroutine.wrap(function()
     end)
 
     tfm:on("tribeMessage", function(member, message)
-        
+
         if message == "!who" then
             printOnlineUsers("discord", member)
         else
@@ -488,7 +490,7 @@ coroutine.wrap(function()
                 guild:getChannel(enum.channels.general_chat):send {
                     embed = {
                         description = "**Welcome here buddy･:+(ﾉ◕ヮ◕)ﾉ*:･**\n\nIf you like introduce yourself in <#696348125060792370>. Also head to <#620437243944763412> to add some roles!\n\nWe hope you enjoy your stay here :smile:",
-                        color = 0x22ff22                        
+                        color = 0x22ff22
                     }
                 }
                 verificationKeys[key] = nil
@@ -498,7 +500,7 @@ coroutine.wrap(function()
 
     tfm:on("newPlayer", function(playerData)
         tribeHouseCount = tribeHouseCount + 1
-        print("Player joined: (total players: " .. tribeHouseCount .. ")") 
+        print("Player joined: (total players: " .. tribeHouseCount .. ")")
         if updated then tfm:sendRoomMessage("Hello " .. playerData.playerName .. "!") end
         if not onlineMembers[playerData.playerName] and members[playerData.playerName] then
             onlineCount = onlineCount + 1
@@ -549,11 +551,13 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
+		elseif msg.content == "> 8ball" then
+    		msg:reply(({"Yes", "No"})[math.random(2)])
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
         elseif msg.content:find("^>%s*p%s*$") then
-            getProfile(msg.member.name, msg)            
+            getProfile(msg.member.name, msg)
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then
             getProfile(discord:getGuild(enum.guild):getMember(mentioned.first.id).name, msg)
         elseif msg.content:find('^>%s*p%s+(.-#?%d*)%s*$') then
@@ -570,7 +574,7 @@ coroutine.wrap(function()
             elseif msg.content:find("^>%s*tc?%s+.+$") then
                 tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
             end
-        
+
         -- verification
         elseif msg.content:lower() == "> verify" then
             sendVerificationKey(msg.member, msg.channel, false)
@@ -601,7 +605,7 @@ coroutine.wrap(function()
 
     discord:on('memberJoin', function(member)
         guild:getChannel(enum.channels.lobby):send(member.user.mentionString)
-        guild:getChannel(enum.channels.lobby):send { 
+        guild:getChannel(enum.channels.lobby):send {
             embed = {
                 title = "Welcome!",
                 description = 'Welcome to the WTAL server (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧\nWe have sent you a DM to verify you in order to give you the best experience!',
@@ -620,6 +624,5 @@ coroutine.wrap(function()
         end
     end)
 end)()
-
 
 discord:run('Bot ' .. os.getenv('DISCORD'))
