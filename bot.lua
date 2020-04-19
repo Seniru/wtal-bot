@@ -506,12 +506,8 @@ end
 
 local whitelistPlayer = function(member, message)
     if message.member:hasRole(enum.roles["manager"].id) then
-        if not members[member] then
-            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
-        else
-            modsys.whitelistPlayer(member, http, json)
-            message:reply("Whitelisted " .. member)
-        end
+        modsys.whitelistPlayer(member, http, json)
+        message:reply("Whitelisted " .. member)
     else
         message:reply("You are not permitted to this action")
     end
