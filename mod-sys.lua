@@ -87,7 +87,7 @@ modsys.whitelistPlayer = function(member, http, json)
             {"Content-Type", "application/json"},
             {"secret-key", JSON_BIN_SECRET},
             {"versioning", "false"}
-        }, json.stringify(res))     
+        }, json.stringify(res))
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
         return "An error occured in the endpoint"
@@ -97,7 +97,7 @@ end
 modsys.getBlacklist = function(http, json)
     return xpcall(function()
         local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
-        local res = json.parse(body)    
+        local res = json.parse(body)
         local list = {}
         for name, listed in next, res.blacklist do
             list[#list + 1] = name

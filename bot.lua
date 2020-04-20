@@ -421,7 +421,7 @@ local reportMember = function(accused, reason, reporter)
             },
             footer = {
                 text = "Reported at: " .. os.date() .. " (+00:00 GMT)"
-            },                        
+            },
             color = 0xffcc33
         }
     }
@@ -457,7 +457,7 @@ local removeWarning = function(member, id, message)
 end
 
 local getWarnings = function(member, target)
-        
+
     local success, res, count = modsys.getWarnings(member, http, json)
     if type(target) == "string" then -- requests from tfm
         if not success then
@@ -645,7 +645,7 @@ coroutine.wrap(function()
             printOnlineUsers("discord", member)
         elseif message:find("^!report .-#%d+%s?.*") then
             local reported, reason = message:match("^!report (.-#%d+)%s?(.*)")
-            reportMember(reported, ((reason == nil or reason == "") and "No reason provided" or reason), member)            
+            reportMember(reported, ((reason == nil or reason == "") and "No reason provided" or reason), member)
         elseif message:find("^!warnings .-#%d+") then
             getWarnings(message:match("^!warnings (.-#%d+)"), member)
         else
@@ -819,7 +819,7 @@ coroutine.wrap(function()
             end
         end
     end)
-    
+
     discord:on('memberJoin', function(member)
         guild:getChannel(enum.channels.lobby):send(member.user.mentionString)
         guild:getChannel(enum.channels.lobby):send {
