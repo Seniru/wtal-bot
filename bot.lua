@@ -1,4 +1,4 @@
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -565,12 +565,12 @@ coroutine.wrap(function()
     tfm:on("connection", function(name, comm, id, time)
         attempts = 5
         print('Logged in successfully!')
-        --tfm:sendTribeMessage("Connected to tribe chat!")
+        tfm:sendTribeMessage("Connected to tribe chat!")
         print('Logging in with forums...')
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         getMembers()
         discord:setGame(onlineCount .. " / " .. totalMembers .. " Online!")
-        --loop()
+        loop()
     end)
 
     tfm:on("connectionFailed", function()
@@ -743,13 +743,6 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-        elseif msg.content == "> json" then
-            local _, json = modsys.getJSON(http)
-            msg:reply("```json\n" .. json .. "\n```")
-        elseif msg.content == "> test" then
-            local _, blacklisted = modsys.isBlacklisted("Aaaaaa#4087", http, json)
-            msg:reply(blacklisted and "Blacklisted" or "Not")
-            -- todo: remove this
         -- profile command
         elseif mentioned:count() == 1 and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
