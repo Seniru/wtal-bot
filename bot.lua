@@ -1,6 +1,6 @@
 math.randomseed(os.time())
 
-local testing = true
+local testing = false
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -735,9 +735,9 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
-        --tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        getMembers()
+        tfm:handlePlayers(true)
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --getMembers()
     end)
 
     discord:on('messageCreate', function(msg)
