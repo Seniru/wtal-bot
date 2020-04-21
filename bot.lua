@@ -1,6 +1,6 @@
 math.randomseed(os.time())
 
-local testing = false
+local testing = true
 --Depenendencies--
 local discordia = require('discordia')
 local http = require('coro-http')
@@ -347,22 +347,26 @@ deleteQuestion = function(question, member, target)
     end
 end
 
-getQuestionQueue = function(target)
-    local success, list, count = qotd.getQuestionQueue(http, json)
-    if not success then
-        target:send(list)
-        return
-    end
-    target:send {
-        embed = {
-            title = "QOTD queue",
-            description = list .. "\n",
-            footer = {
-                text = "Total Questions: " .. count
-            },
-            color = 0x2987ba
+getQuestionQueue = function(member, target)
+    if member:hasRole(enum.roles["manager"].id) then
+        local success, list, count = qotd.getQuestionQueue(http, json)
+        if not success then
+            target:send(list)
+            return
+        end
+        target:send {
+            embed = {
+                title = "QOTD queue",
+                description = list .. "\n",
+                footer = {
+                    text = "Total Questions: " .. count
+                },
+                color = 0x2987ba
+            }
         }
-    }
+    else
+        target:send("You are not allowed to do this action!")
+    end
 end
 
 -- moderation functions
@@ -731,9 +735,9 @@ coroutine.wrap(function()
         guild = discord:getGuild(enum.guild)
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
-        tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        --getMembers()
+        --tfm:handlePlayers(true)
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        getMembers()
     end)
 
     discord:on('messageCreate', function(msg)
@@ -768,7 +772,7 @@ coroutine.wrap(function()
         elseif msg.content:find("^>%s*qotd ask%s+force%s*$") then
             askQuestion(msg.member, msg.channel, true)
         elseif msg.content:find("^>%s*qotd queue%s*$") then
-            getQuestionQueue(msg.channel)
+            getQuestionQueue(msg.member, msg.channel)
         elseif msg.content:find("^>%s*qotd delete.*$") then
             deleteQuestion(msg.content:match("^>%s*qotd delete (%d+)$"), msg.member, msg.channel)
             -- restart command
