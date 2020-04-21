@@ -493,14 +493,10 @@ end
 
 local blacklistPlayer = function(member, message)
     if message.member:hasRole(enum.roles["manager"].id) then
-        if not members[member] then
-            message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
-        else
-            modsys.blacklistPlayer(member, http, json)
-            message:reply("Blacklisted " .. member)
-            tfm:kickTribeMember(member)
-            tfm:sendTribeMessage(member .. " has been blacklisted, please do not invite them back!")
-        end
+    	modsys.blacklistPlayer(member, http, json)
+        message:reply("Blacklisted " .. member)
+        tfm:kickTribeMember(member)
+        tfm:sendTribeMessage(member .. " has been blacklisted, please do not invite them back!")
     else
         message:reply("You are not permitted to this action")
     end
