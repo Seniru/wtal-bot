@@ -12,6 +12,7 @@ local enum = require(testing and 'enum-test' or 'enum')
 local hi = require('replies')
 local qotd = require('qotd-client')
 local modsys = require('mod-sys')
+local cmds = require("cmds")
 local md5 = require('md5')
 
 local discord = discordia.Client({
@@ -28,6 +29,7 @@ local updated = false
 local histLogs = {}
 local members = {}
 local verificationKeys = {}
+local commands = {}
 local onlineMembers = {
     ["Wtal#5272"] = true
 }
@@ -59,7 +61,7 @@ end
 
 local removeRanks = function(member)
     for role, data in next, enum.roles do
-        if member:hasRole(data.id) and role ~= "manager" and role ~= "member" and role ~= "Verified" then
+        if member:hasRole(data.id) and role ~= "manager" and role ~= "member" and role ~= "Verified" and role ~= "cmder" then
             member:removeRole(data.id)
         end
     end
@@ -72,7 +74,7 @@ setRank = function(member, fromTfm)
         for name, data in next, members do
             local rank = data.rank
             if name:lower():find(member.name:lower() .. '#?%d*') then
-                print('Found member mathcing the given instance')
+                print('Found member matching the given instance')
                 print('Removing existing rank')
                 removeRanks(member)
                 print('Adding the new rank \'' .. rank .. '\'')
@@ -231,7 +233,7 @@ local printOnlineUsers = function(from, target)
         -- storing the ranks in order
         local orderedRanks = {}
         for rankName, data in next, enum.roles do
-            if not ({Verified = true, manager = true, member = true, ['Passer-by'] = true})[rankName] then
+            if not ({Verified = true, manager = true, member = true, cmder = true, ['Passer-by'] = true})[rankName] then
                 table.insert(orderedRanks, {rank = rankName, index = data.index})
             end
         end
@@ -530,6 +532,158 @@ local getBlacklist = function(target)
     end
 end
 
+local createCommand = function(name, compiler, source, message)
+    if name == nil or compiler == nil or source == nil then
+        return message.channel:send(":x: Failed to create the command. Please supply all the arguments\nFormat: `> ccmd <name> <compiler> <source>`")
+    elseif name:len() > 10  then
+        return message.channel:send(":x: Command name should be less than or equal to 10 characters")
+    end
+
+    if message.member:hasRole(enum.roles["manager"].id) or message.member:hasRole(enum.roles["cmder"].id) then
+        if commands[name] then
+            message.channel:send("Command **" .. name .. "** already exists! Please use `> ecmd` to overwrite it!")
+        else
+            commands[name] = {runner = compiler, source = source, author = message.author.id}
+            local success = cmds.updateCommands(commands, http, json)
+            message.channel:send(success and ":white_check_mark: | Created the command" or ":x: | Failed, please try again later!")
+        end
+    else
+        message.channel:send {
+            embed = {
+                title = ":x: Error",
+                description = "You need the <@&" .. enum.roles["cmder"].id .. "> role to manage commands",
+                color = 0xcc0000
+            }
+        }
+    end
+end
+
+local deleteCommand = function(name, message)
+    if message.member:hasRole(enum.roles["manager"].id) or message.member:hasRole(enum.roles["cmder"].id) then
+        if commands[name] and (message.member:hasRole(enum.roles["manager"].id) or commands[name].author == message.author.id) then
+            commands[name] = nil
+            local success = cmds.updateCommands(commands, http, json)
+            message.channel:send(success and ":white_check_mark: | Deleted the command" or ":x: | Failed, please try again later!")
+        else
+            message.channel:send(":x: You are not the author of the specified command or the command doesn't exist!")
+        end
+    else
+        message.channel:send {
+            embed = {
+                title = ":x: Error",
+                description = "You need the <@&" .. enum.roles["cmder"].id .. "> role to manage commands",
+                color = 0xcc0000
+            }
+        }
+    end
+end
+
+local editCommand = function(name, compiler, source, message)
+
+    if name == nil or compiler == nil or source == nil then
+        return message.channel:send(":x: Failed to edit the command. Please supply all the arguments\nFormat: `> ccmd <name> <compiler> <source>`")
+    end
+
+    if message.member:hasRole(enum.roles["manager"].id) or message.member:hasRole(enum.roles["cmder"].id) then
+        if commands[name] and (message.member:hasRole(enum.roles["manager"].id) or commands[name].author == message.author.id) then
+            commands[name] = {runner = compiler, source = source, author = message.author.id}
+            local success = cmds.updateCommands(commands, http, json)
+            message.channel:send(success and ":white_check_mark: | Editted the command" or ":x: | Failed, please try again later!")
+        else
+            message.channel:send(":x: You are not the author of the specified command or the command doesn't exist!")
+        end
+    else
+        message.channel:send {
+            embed = {
+                title = ":x: Error",
+                description = "You need the <@&" .. enum.roles["cmder"].id .. "> role to manage commands",
+                color = 0xcc0000
+            }
+        }
+    end
+end
+
+local runCommand = function(cmd, input, target)
+    xpcall(function()
+    
+        local cmd = commands[cmd]
+        if cmd then
+            local success, res = cmds.runCommand(cmd.source, cmd.runner, input, http, json)
+            if success then
+                if res["status"] ~= "0" then
+                    target:send {
+                        embed = {
+                            title = ":x: Error in the command",
+                            description = "Contact the author of this command to fix it\n\n**Error log**:\n ```\n" .. (res["program_error"] or "") .. "```",
+                            color = 0xcc0000
+                        }
+                    }
+                else
+                    res = json.parse(res["program_output"])
+                    if not res then
+                        target:send(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
+                    else
+                        target:send {
+                            embed = res
+                        }
+                    end
+                end
+            else
+                target:send(":x: | An error occured, please try again later!")
+            end
+        end
+    end, function(err)
+        print("An error occured: " .. err)
+    end)
+end
+
+local displayCommands = function(target)   
+    local res = ""
+    local count = 0
+    for cmd, data in next, commands do
+        res = res .. "\n• " .. cmd
+        count = count + 1
+        if res:len() > 2000 then
+            target:send {
+                embed = {
+                    title = "Available commands",
+                    description = res,
+                    color = 0x2987ba
+                }
+            }
+            res = ""   
+        end
+    end
+    target:send {
+        embed = {
+            title = "Available commands",
+            description = res,
+            color = 0x2987ba,
+            footer = {
+                text = "Total commands: " .. count
+            }
+        }
+    }    
+end
+
+local displayCommandInfo = function(command, target)
+    if not commands[command] then
+        target:send(":x: | Cannot find that command")
+    else
+        local cmd = commands[command]
+        target:send {
+            embed = {
+                title = "Command info",
+                fields = {
+                    {name = "Author", value = "<@!" .. cmd.author .. ">"},
+                    {name = "Source", value = "[" .. cmd.source .. "](" .. cmd.source .. ")"}
+                },
+                color = 0x2987ba
+            }
+        }
+    end
+end
+
 local normalizeMessage = function(body)
     return body
         :gsub("<(:%w+:)%d+>", "%1") -- normalizing emojis
@@ -737,7 +891,8 @@ coroutine.wrap(function()
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        --getMembers()
+        local _, res = cmds.getCommands(http, json)
+        commands = res
     end)
 
     discord:on('messageCreate', function(msg)
@@ -745,8 +900,6 @@ coroutine.wrap(function()
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
-		elseif msg.content == "> 8ball" then
-    		msg:reply(({"Yes", "No"})[math.random(2)])
         -- profile command
         elseif mentioned:count() == 1 and msg.author.id ~= "654987403890524160" and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
@@ -817,6 +970,23 @@ coroutine.wrap(function()
             elseif msg.content:find("^>%s*tc?%s+.+$") then
                 tfm:sendTribeMessage("[" .. msg.member.name .. "] " .. normalizeMessage(msg.content:match("^>%s*tc?%s+(.+)$")))
             end
+        -- custom commands
+        elseif msg.content:find("^>%s*cmds$") then
+            displayCommands(msg.channel)
+        elseif msg.content:find("^>%s*cmd%s+%w+") then
+            displayCommandInfo(msg.content:match(">%s*cmd%s+(%w+)"), msg.channel)
+        elseif msg.content:find("^>%s*ccmd .- %w+://.+") then -- create new command
+            local name, compiler, source = msg.content:match("^>%s*ccmd%s+(%w+)%s+(.+)%s+(%w+://.+)")
+            createCommand(name, compiler, source, msg)
+        elseif msg.content:find("^>%s*dcmd %w+") then -- delete command
+            local name = msg.content:match("^>%s*dcmd%s+(%w+)")
+            deleteCommand(name, msg)
+        elseif msg.content:find("^>%s*ecmd .- %w+://.+") then -- edit command
+            local name, compiler, source = msg.content:match("^>%s*ecmd%s+(%w+)%s+(.+)%s+(%w+://.+)")
+            editCommand(name, compiler, source, msg)
+        elseif msg.content:find("^>%s*.*") then -- calls a command
+            local cmd, input = msg.content:match("^>%s*(%w+)%s*(.*)")
+            runCommand(cmd, msg.author.id .. "\n" .. (input and "'" .. input .. "'" or " "), msg.channel)
         end
     end)
 
