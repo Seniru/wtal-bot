@@ -394,7 +394,7 @@ end
 changeGreeting = function(greeting, msg)
     if msg.member:hasRole(enum.roles["manager"].id) then
         print("Changed greeting message")
-        tfm:changeTribeGreeting(greeting)
+        tfm:setTribeGreetingMessage(greeting)
         msg:reply("Changed the greeting message!")
     else
         msg:reply("You are not permitted to do this action")
@@ -700,13 +700,6 @@ local normalizeMessage = function(body)
                 return role and "@" .. role.name or nil
             end
         end)
-end
-
--- transfromage functions
-tfm.changeTribeGreeting = function(self, greeting)
-    self.main:send(tfmEnum.identifier.bulle, self._encode:xorCipher(
-        byteArray:new():write16(98):write32(1):writeUTF(greeting), self.main.packetID)
-    )
 end
 
 coroutine.wrap(function()

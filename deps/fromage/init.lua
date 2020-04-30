@@ -11,8 +11,14 @@ local extensions = require("extensions")
 --[[ autoupdate ]]--
 do
 	local autoupdate = io.open("autoupdate", 'r') or io.open("autoupdate.txt", 'r')
-	if autoupdate then
-		autoupdate:close()
+	local semiupdate = not autoupdate and (io.open("semiautoupdate", 'r') or io.open("semiautoupdate.txt", 'r'))
+	if autoupdate or semiautoupdate then
+		if autoupdate then
+			autoupdate:close()
+		end
+		if semiupdate then
+			semiupdate:close()
+		end
 
 		coroutine.wrap(function()
 			local pkg = require("deps/fromage/package")
@@ -22,12 +28,24 @@ do
 				if lastVersion then
 					lastVersion = string.match(lastVersion, "version = \"(.-)\"")
 					if version ~= lastVersion then
-						for i = 1, #pkg.files do
-							os.remove("deps/fromage/" .. pkg.files[i])
+						local toUpdate
+						if semiupdate then
+							repeat
+								print("There is a new version of 'Fromage' available [" .. lastVersion .. "]. Update it now? (Y/N)")
+								toUpdate = string.lower(io.read())
+							until toUpdate == 'n' or toUpdate == 'y'
+						else
+							toUpdate = 'y'
 						end
-						os.execute("lit install Lautenschlager-id/fromage") -- Installs the new lib
-						os.execute("luvit " .. table.concat(args, ' ')) -- Luvit's command
-						return os.exit()
+
+						if toUpdate == 'y' then
+							for i = 1, #pkg.files do
+								os.remove("deps/fromage/" .. pkg.files[i])
+							end
+							os.execute("lit install Lautenschlager-id/fromage") -- Installs the new lib
+							os.execute("luvit " .. table.concat(args, ' ')) -- Luvit's command
+							return os.exit()
+						end
 					end
 				end
 			end
@@ -154,6 +172,7 @@ local htmlChunk = {
 	date                       = '(%d+/%d+/%d+)',
 	edition_timestamp          = 'cadre%-message%-dates.-(%d+)',
 	empty_section              = '<div class="aucun%-resultat">Empty</div>',
+	error_503                  = "^<html>\r?\n<head><title>503 Service Temporarily Unavailable</title></head>",
 	favorite_topics            = '<td rowspan="2">(.-)</td>%s+<td rowspan="2">',
 	greeting_message           = '<h4>Greeting message</h4> (.*)$',
 	hidden_value               = '<input type="hidden" name="%s" value="(%%d+)"/?>',
@@ -172,6 +191,7 @@ local htmlChunk = {
 	navigation_bar_sec_content = '^<(.+)>%s*(.+)%s*$',
 	navigation_bar_sections    = '<a.-href="(.-)".->%s*(.-)%s*</a>',
 	nickname                   = '(%S+)<span class="nav%-header%-hashtag">(#(%d+))',
+	not_connected              = '<p> +You must be connected to do this%. +</p>',
 	poll_content               = '<div>%s+(.-)%s+</div>%s+<br>',
 	poll_option                = '<label class="(.-) ">%s+<input type="%1" name="reponse_%d*" id="reponse_(%d+)" value="%2" .-/>%s+(.-)%s+</label>',
 	poll_percentage            = 'reponse%-sondage">.-%((%d+)%)</div>',
@@ -284,7 +304,7 @@ local assertion = function(name, etype, id, value)
 		assert(t == etype, "bad argument #" .. id .. " to '" .. name .. "' (" .. etype .. " expected, got " .. t .. ")")
 	end
 end
-local cryptToSha256 
+local cryptToSha256
 do
 	local required, openssl = pcall(require, "openssl")
 	assert(required, "\"openssl\" module not found.")
@@ -403,21 +423,7 @@ end
 --[[ Class ]]--
 return function()
 	-- Internal
-	local this = {
-		-- Whether the account is connected or not
-		isConnected = false,
-		-- The nickname of the account, if it's connected.
-		userName = nil,
-		userId = nil,
-		tribeId = nil,
-		cookieState = cookieState.login,
-		-- Account cookies
-		cookies = { },
-		-- Whether the account has validated its account with a code
-		hasCertificate = false,
-		-- Current time since the last login
-		connectionTime = -1
-	}
+	local this = { }
 	-- External
 	local self = { }
 
@@ -491,7 +497,7 @@ return function()
 		end
 
 		head, body = http.request("POST", forumLink .. uri, headers, (file and (string.gsub(file, "/KEY(%d)/", function(id)
-			return secretKeys[tonumber(id)] 
+			return secretKeys[tonumber(id)]
 		end)) or (table.concat(body, '&'))))
 
 		this.setCookies(head)
@@ -506,6 +512,23 @@ return function()
 	end
 
 	--> Private function
+	local newThis = function()
+		-- Whether the account is connected or not
+		this.isConnected = false
+		-- The nickname of the account, if it's connected.
+		this.userName = nil
+		this.userId = nil
+		this.tribeId = nil
+		this.cookieState = cookieState.login
+		-- Account cookies
+		this.cookies = { }
+		-- Whether the account has validated its account with a code
+		this.hasCertificate = false
+		-- Current time since the last login
+		this.connectionTime = -1
+	end
+	newThis()
+
 	local getNavbar = function(content, isNavbar)
 		local navBar = (isNavbar and content or string.match(content, htmlChunk.navigation_bar))
 		if not navBar then
@@ -530,7 +553,7 @@ return function()
 			local html, name = string.match(code, htmlChunk.navigation_bar_sec_content)
 			if html then
 				navigation_bar[counter].name = name
-	
+
 				lastHtml = html
 				if not community then
 					community = string.match(html, htmlChunk.community)
@@ -585,13 +608,18 @@ return function()
 				while true do
 					local result = { iterator() }
 					if #result == 0 then break end
+					result[#result + 1] = body
+
 					counter = counter + 1
 					list[counter] = f(table.unpack(result))
 				end
 			else
 				string.gsub(body, html, function(...)
+					local result = { ... }
+					result[#result + 1] = body
+
 					counter = counter + 1
-					list[counter] = f(...)
+					list[counter] = f(table.unpack(result))
 				end)
 			end
 		end, true, nil, inif)
@@ -763,11 +791,33 @@ return function()
 	end
 	--[[@
 		@file Api
-		@desc Checks whether the instance is connected to an account or not.
+		@desc Checks whether the instance is supposed to be connected to an account or not.
+		@desc Note that this function does not perform any request to confirm the existence of the connection and is fully based on @see connect and @see disconnect.
+		@desc See @see isConnectionAlive to confirm that the connection is still active.
 		@returns boolean Whether there's already a connection or not.
 	]]
 	self.isConnected = function()
 		return this.isConnected
+	end
+	--[[@
+		@file Api
+		@desc Checks whether the instance connection is alive or not.
+		@desc /!\ Calling this function several times uninterruptedly may disconnect the account unexpectedly due to the forum delay.
+		@desc See @see isConnected to check whether the connection should exist or not.
+		@returns boolean Whether the connection is alive or not.
+	]]
+	self.isConnectionAlive = function()
+		if not this.isConnected then
+			return false
+		end
+
+		local body = this.getPage(forumUri.conversations)
+		local isAlive = not (string.find(body, htmlChunk.error_503) or string.find(body, htmlChunk.not_connected))
+		if not isAlive then
+			newThis()
+		end
+
+		return isAlive
 	end
 	--[[@
 		@file Api
@@ -886,14 +936,7 @@ return function()
 		end
 
 		if string.sub(result, 2, 15) == '"supprime":"*"' then
-			this.isConnected = false
-			this.userName = nil
-			this.cookieState = cookieState.login
-			this.cookies = { }
-			this.userId = nil
-			this.tribeId = nil
-			this.hasCertificate = false
-			this.connectionTime = -1
+			newThis()
 			return true, result
 		end
 		return false, result
@@ -1247,7 +1290,7 @@ return function()
 		@returns nil,string Message error.
 		@struct {
 			co = 0, -- The conversation id.
-			firstMessage = getMessage, -- The message object of the first message of the conversation. (It's ignored when 'isPoll') 
+			firstMessage = getMessage, -- The message object of the first message of the conversation. (It's ignored when 'isPoll')
 			invitedUsers = {
 				[userName] = "", -- Situation string field. (e.g: invited, gone, author)
 			}, -- The list of players that are listed in the conversation.
@@ -1295,7 +1338,7 @@ return function()
 				return nil, err .. " (0x3)"
 			end
 		end
-		
+
 		if not isPoll then
 			isDiscussion = not not string.find(titleIcon, enumerations.topicIcon.private_discussion)
 			isPrivateMessage = not isDiscussion
@@ -1650,13 +1693,13 @@ return function()
 			timestamp = 0 -- The timestamp of when the message was created.
 		}
 	]]
-	self.getMessage = function(postId, location)
+	self.getMessage = function(postId, location, _body)
 		assertion("getMessage", { "number", "string" }, 1, postId)
 		assertion("getMessage", "table", 2, location)
 
 		local pageNumber = math.ceil(tonumber(postId) / 20)
 
-		local body = this.getPage((location.co and (forumUri.conversation .. "?co=" .. location.co) or (forumUri.topic .. "?f=" .. location.f .. "&t=" .. location.t)) .. "&p=" .. pageNumber)
+		local body = _body or this.getPage((location.co and (forumUri.conversation .. "?co=" .. location.co) or (forumUri.topic .. "?f=" .. location.f .. "&t=" .. location.t)) .. "&p=" .. pageNumber)
 
 		local id, post
 		if not location.co then
@@ -1762,7 +1805,7 @@ return function()
 			totalMessages = 0 -- The total of messages in the topic.
 		}
 	]]
-	self.getTopic = function(location, ignoreFirstMessage)
+	self.getTopic = function(location, ignoreFirstMessage, _body)
 		assertion("getTopic", "table", 1, location)
 		assertion("getTopic", { "boolean", "nil" }, 2, ignoreFirstMessage)
 
@@ -1771,7 +1814,7 @@ return function()
 		end
 
 		local path = "?f=" .. location.f .. "&t=" .. location.t
-		local body = this.getPage(forumUri.topic .. path)
+		local body = _body or this.getPage(forumUri.topic .. path)
 
 		local isPoll, poll = not not string.find(body, string.format(htmlChunk.hidden_value, forumUri.poll_id)) -- Whether it's a poll or not
 		if isPoll and not ignoreFirstMessage then
@@ -2093,7 +2136,7 @@ return function()
 			local counter = 0
 			if getAllInfo then
 				for i = (post - 19), post do
-					local msg, err = self.getMessage(tostring(i), location)
+					local msg, err = self.getMessage(tostring(i), location, body)
 					if not msg then
 						break -- End of the page
 					end
@@ -2155,11 +2198,11 @@ return function()
 			return nil, errorString.no_url_location .. " " .. string.format(errorString.no_required_fields, "'f', 's'")
 		end
 
-		return getList(pageNumber, forumUri.section .. "?f=" .. location.f .. "&s=" .. location.s, function(id, title, author, timestamp)
+		return getList(pageNumber, forumUri.section .. "?f=" .. location.f .. "&s=" .. location.s, function(id, title, author, timestamp, _body)
 			id = tonumber(id)
 
 			if getAllInfo then
-				local tpc, err = self.getTopic({ f = location.f, t = id }, true)
+				local tpc, err = self.getTopic({ f = location.f, t = id }, true, _body)
 				if not tpc then
 					return nil, err
 				end
@@ -2676,7 +2719,7 @@ return function()
 			end
 			link = forumUri.view_user_image .. "?im=" .. elementId
 		else
-			return nil, errorString.unaivalable_enum 
+			return nil, errorString.unaivalable_enum
 		end
 
 		return this.performAction(forumUri.report, {
@@ -3576,6 +3619,7 @@ return function()
 		}, forumUri.edit_section_permissions .. "?f=" .. location.f .. "&s=" .. location.s)
 	end
 
+	--[========================================================================================[ DEPRECATED
 	-- > Micepix
 	--[[@
 		@file Micepix
@@ -3723,7 +3767,7 @@ return function()
 			{ "im", table.concat(imageId, separator.forum_data) }
 		}, forumUri.user_images .. "?pr=" .. this.userId)
 	end
-
+	]========================================================================================]
 	-- > Miscellaneous
 	--[[@
 		@file Miscellaneous
