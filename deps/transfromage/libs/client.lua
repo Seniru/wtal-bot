@@ -1386,7 +1386,8 @@ packetListener = {
 	[44] = {
 		[1] = function(self, packet, connection, identifiers) -- Switch bulle identifiers
 			local serverTimestamp = packet:read32()
-			local bulleId = packet:read32()
+			local uid = packet:read32()
+                        local pid = packet:read32()
 			local bulleIp = packet:readUTF()
 
 			local oldBulle = self.bulle
@@ -1399,7 +1400,7 @@ packetListener = {
 				end
 
 				self.bulle:send(enum.identifier.bulleConnection,
-					byteArray:new():write32(serverTimestamp):write32(bulleId))
+					byteArray:new():write32(serverTimestamp):write32(uid):write32(pid))
 				--[[@
 					@name switchBulleConnection
 					@desc Triggered when the bulle connection is switched.
@@ -1407,7 +1408,7 @@ packetListener = {
 					@param bulleIp<string> The IP of the new bulle.
 					@param serverTimestamp<int> The timestamp of the server.
 				]]
-				self.event:emit("switchBulleConnection", bulleId, bulleIp, serverTimestamp)
+				self.event:emit("switchBulleConnection", uid, pid, bulleIp, serverTimestamp)
 			end)
 		end,
 		[22] = function(self, packet, connection, identifiers) -- PacketID offset identifiers
