@@ -1,1 +1,1 @@
-PROJECT_NAME: ./script.bash
+bot: ./script.bash
