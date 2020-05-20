@@ -691,8 +691,8 @@ local normalizeMessage = function(body)
             local channel = guild:getChannel(channelId)
             return channel and "#" .. channel.name or nil
         end)
-        :gsub("<@([!&])(%d+)>", function(mentionType, mentioned) -- normalizing channel and role mentions
-            if mentionType == "!" then -- member mention
+        :gsub("<@([!&]?)(%d+)>", function(mentionType, mentioned) -- normalizing channel and role mentions
+            if mentionType == "!" or mentionType == "" then -- member mention
                 local member = guild:getMember(mentioned)
                 return member and "@" .. member.name or nil
             elseif mentionType == "&" then -- role mention
