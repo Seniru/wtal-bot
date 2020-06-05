@@ -797,8 +797,8 @@ coroutine.wrap(function()
             getWarnings(message:match("^!warnings (.-#%d+)"), member)
         else
             guild:getChannel(enum.channels.tribe_chat):send(
-                --("> **[" .. member .. "]** " .. message):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
-		("```css\n[" .. member .. "]" .. message .. "\n```"):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
+                ("> **[" .. member .. "]** " .. message):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
+		--("```css\n[" .. member .. "]" .. message .. "\n```"):gsub("@here", "@|here"):gsub("@everyone", "@|everyone")
             )
         end
 
