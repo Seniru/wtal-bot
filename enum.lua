@@ -34,7 +34,7 @@ local enum = {
         ['Birthday Mouse']      = {id = '569067565087850502', index = 8},
         ['Tribebot']            = {id = '688982282123477002', index = 7},
         ['Forum Writer']        = {id = '569067538688770048', index = 6},
-        ['Royal Talker']        = {id = '718410004667039834', index = 5}
+        ['Royal Talker']        = {id = '718410004667039834', index = 5},
         ['Discord Mum']         = {id = '635467780564451348', index = 4},
         ['Yolo Talker']         = {id = '572731980014157824', index = 3},
         ['Happy Talker']        = {id = '569067512122048522', index = 2},
