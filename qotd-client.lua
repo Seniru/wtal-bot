@@ -1,28 +1,38 @@
 local JSON_BIN_ENDPOINT = "https://api.jsonbin.io/b/5e70737c05179259c0bdbfde"
 local JSON_BIN_SECRET = "$2b$10$" .. os.getenv("JSON_BIN_SECRET")
+local DATA_CHANNEL = "718723565167575061"
+local DATA_ID = "718728423475904562"
 
 local qotd = {}
 
-qotd.addQuestion = function(question, http, json)
+qotd.test = function(discord, json)
+    discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent("```json\n" .. json.stringify(
+        {
+            ["questions"] = {},
+            ["last-post"] = os.time(),
+            ["index"] = 122
+        }
+        
+    ) .. "\n```") 
+end
+
+qotd.addQuestion = function(question, discord, json)
     return xpcall(function()
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local body = discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID).content:sub(8, -5)
         local res = json.parse(body)
         table.insert(res.questions, question)
-        print(#res.questions)
-        http.request("PUT", JSON_BIN_ENDPOINT, {
-            {"Content-Type", "application/json"},
-            {"secret-key", JSON_BIN_SECRET},
-            {"versioning", "false"}
-        }, json.stringify(res))
+        discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent("```json\n" .. 
+            json.stringify(res)
+        .. "\n```")
     end, function(err) 
         print("An error occured in the endpoint\nErr: " .. err)
     end)
 end
 
-qotd.retrieveQuestion = function(http, json, force)
+qotd.retrieveQuestion = function(discord, json, force)
     return xpcall(function()
         print("Retrieving JSON data")
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local body = discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID).content:sub(8, -5)
         local res = json.parse(body)
         if #res.questions == 0 then return "No more questions", false end
         print("Retrieved! Manipulating data...")
@@ -34,11 +44,9 @@ qotd.retrieveQuestion = function(http, json, force)
             res["last-post"] = os.time()
             res["index"] = res["index"] + 1
             print("Manipulation done! Posting updated data...")
-            http.request("PUT", JSON_BIN_ENDPOINT, {
-                {"Content-Type", "application/json"},
-                {"secret-key", JSON_BIN_SECRET},
-                {"versioning", "false"}
-            }, json.stringify(res))
+            discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent("```json\n" .. 
+                json.stringify(res)
+            .. "\n```")
             print("Printing the question...")
             return {question=question, index=res.index}, true
         else
@@ -50,9 +58,9 @@ qotd.retrieveQuestion = function(http, json, force)
     end)
 end
 
-qotd.getQuestionQueue = function(http, json)
+qotd.getQuestionQueue = function(discord, json)
     return xpcall(function()
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local body = discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID).content:sub(8, -5)
         local questions = json.parse(body)["questions"]
         local res = ""
         local count = 0
@@ -60,6 +68,7 @@ qotd.getQuestionQueue = function(http, json)
             res = res .. (count + 1) .. ". " .. question .. "\n"
             count = count + 1
         end
+        p(questions)
         return res, count
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
@@ -67,29 +76,26 @@ qotd.getQuestionQueue = function(http, json)
     end)
 end
 
-qotd.deleteQuestion = function(questionId, http, json)
+qotd.deleteQuestion = function(questionId, discord, json)
     return xpcall(function()
         print("Retrieving JSON data...")
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local body = discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID).content:sub(8, -5)
         local res = json.parse(body)
         print("Deleting the question...")
         table.remove(res.questions, questionId)
         print("Updating JSON data...")
-        http.request("PUT", JSON_BIN_ENDPOINT, {
-                {"Content-Type", "application/json"},
-                {"secret-key", JSON_BIN_SECRET},
-                {"versioning", "false"}
-            }, json.stringify(res)
-        )
+        discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent("```json\n" .. 
+                json.stringify(res)
+        .. "\n```")
         print("Done!")
     end, function(err)
         print("An error occured in the endpoint\nErr: " .. err)
     end)
 end
 
-qotd.isInCooldown = function(http, json)
+qotd.isInCooldown = function(discord, json)
     return xpcall(function()
-        local head, body = http.request("GET", JSON_BIN_ENDPOINT, {{"secret-key", JSON_BIN_SECRET}})
+        local body = discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID).content:sub(8, -5)
         local res = json.parse(body)["last-post"]
         return os.time() < (res + 1 * 60 * 60 * 24)
     end, function(err)

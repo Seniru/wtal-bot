@@ -40,7 +40,7 @@ local attempts = 5
 
 loop = function()
     tfm:playEmoticon(math.random(0, 9))
-    local _, inCooldown = qotd.isInCooldown(http, json)
+    local _, inCooldown = qotd.isInCooldown(discord, json)
     if not inCooldown then
         askQuestion(guild:getMember(discord.user.id))
     else
@@ -307,7 +307,7 @@ addQuestion = function(question, member, target)
         target:send("You are not permitted to do this action!")
     else
         print("Adding a new QOTD")
-        local success = qotd.addQuestion(question, http, json)
+        local success = qotd.addQuestion(question, discord, json)
         target:send(success and "Added the new question!" or "An error occured in the endpoint!")
     end
 end
@@ -317,7 +317,7 @@ askQuestion = function(member, target, force)
         target:send("You are not permitted to do this action!")
     else
         print("Posting a new QOTD...")
-        local _, res, success = qotd.retrieveQuestion(http, json, force)
+        local _, res, success = qotd.retrieveQuestion(discord, json, force)
         if success then
             guild:getChannel(enum.channels.question_otd):send {
                 embed = {
@@ -344,14 +344,14 @@ deleteQuestion = function(question, member, target)
         target:send("You must provide a valid number as the argument!")
     else
         local qId = tonumber(question)
-        local success = qotd.deleteQuestion(qId, http, json)
+        local success = qotd.deleteQuestion(qId, discord, json)
         target:send(success and "Deleted the question" or "An error occured!")
     end
 end
 
 getQuestionQueue = function(member, target)
     if member:hasRole(enum.roles["manager"].id) then
-        local success, list, count = qotd.getQuestionQueue(http, json)
+        local success, list, count = qotd.getQuestionQueue(discord, json)
         if not success then
             target:send(list)
             return
@@ -439,7 +439,7 @@ local warnMember = function(member, reason, message)
         if not members[member] then
             message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
         else
-            modsys.warnMember(member, reason, http, json)
+            modsys.warnMember(member, reason, discord, json)
             tfm:sendWhisper(member, "You have been warned!")
             tfm:sendWhisper(member, "Reason: " .. reason)
             message:reply("Warned the member")
@@ -454,7 +454,7 @@ local removeWarning = function(member, id, message)
         if not members[member] then
             message:reply("Cannot Cannot find the member ¯\\_(ツ)_/¯")
         else
-            modsys.removeWarning(member, id, http, json)
+            modsys.removeWarning(member, id, discord, json)
             message:reply("Removed the warning #" .. id .. " of " .. member)
         end
     else
@@ -464,7 +464,7 @@ end
 
 local getWarnings = function(member, target)
 
-    local success, res, count = modsys.getWarnings(member, http, json)
+    local success, res, count = modsys.getWarnings(member, discord, json)
     if type(target) == "string" then -- requests from tfm
         if not success then
             tfm:sendWhisper(target, "An error occurred")
@@ -499,7 +499,7 @@ end
 
 local blacklistPlayer = function(member, message)
     if message.member:hasRole(enum.roles["manager"].id) then
-    	modsys.blacklistPlayer(member, http, json)
+    	modsys.blacklistPlayer(member, discord, json)
         message:reply("Blacklisted " .. member)
         tfm:kickTribeMember(member)
         tfm:sendTribeMessage(member .. " has been blacklisted, please do not invite them back!")
@@ -510,7 +510,7 @@ end
 
 local whitelistPlayer = function(member, message)
     if message.member:hasRole(enum.roles["manager"].id) then
-        modsys.whitelistPlayer(member, http, json)
+        modsys.whitelistPlayer(member, discord, json)
         message:reply("Whitelisted " .. member)
     else
         message:reply("You are not permitted to this action")
@@ -518,7 +518,7 @@ local whitelistPlayer = function(member, message)
 end
 
 local getBlacklist = function(target)
-    local success, list = modsys.getBlacklist(http, json)
+    local success, list = modsys.getBlacklist(discord, json)
     if not success then
         target:send("An error occured!")
     else
@@ -544,7 +544,7 @@ local createCommand = function(name, compiler, source, message)
             message.channel:send("Command **" .. name .. "** already exists! Please use `> ecmd` to overwrite it!")
         else
             commands[name] = {runner = compiler, source = source, author = message.author.id}
-            local success = cmds.updateCommands(commands, http, json)
+            local success = cmds.updateCommands(commands, discord, json)
             message.channel:send(success and ":white_check_mark: | Created the command" or ":x: | Failed, please try again later!")
         end
     else
@@ -562,7 +562,7 @@ local deleteCommand = function(name, message)
     if message.member:hasRole(enum.roles["manager"].id) or message.member:hasRole(enum.roles["cmder"].id) then
         if commands[name] and (message.member:hasRole(enum.roles["manager"].id) or commands[name].author == message.author.id) then
             commands[name] = nil
-            local success = cmds.updateCommands(commands, http, json)
+            local success = cmds.updateCommands(commands, discord, json)
             message.channel:send(success and ":white_check_mark: | Deleted the command" or ":x: | Failed, please try again later!")
         else
             message.channel:send(":x: You are not the author of the specified command or the command doesn't exist!")
@@ -587,7 +587,7 @@ local editCommand = function(name, compiler, source, message)
     if message.member:hasRole(enum.roles["manager"].id) or message.member:hasRole(enum.roles["cmder"].id) then
         if commands[name] and (message.member:hasRole(enum.roles["manager"].id) or commands[name].author == message.author.id) then
             commands[name] = {runner = compiler, source = source, author = message.author.id}
-            local success = cmds.updateCommands(commands, http, json)
+            local success = cmds.updateCommands(commands, discord, json)
             message.channel:send(success and ":white_check_mark: | Editted the command" or ":x: | Failed, please try again later!")
         else
             message.channel:send(":x: You are not the author of the specified command or the command doesn't exist!")
@@ -755,7 +755,7 @@ coroutine.wrap(function()
     end)
 
     tfm:on("newTribeMember", function(member)
-        local _, blacklisted = modsys.isBlacklisted(member, http, json)
+        local _, blacklisted = modsys.isBlacklisted(member, discord, json)
         if blacklisted then
             tfm:kickTribeMember(member)
             tfm:sendTribeMessage(member .. " is in the blacklist! Please do not invite them back")
@@ -885,7 +885,7 @@ coroutine.wrap(function()
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        local _, res = cmds.getCommands(http, json)
+        local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
 
