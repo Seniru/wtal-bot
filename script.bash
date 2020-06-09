@@ -1,5 +1,5 @@
 function run() {
-    luvit bot.lua || run
+    luvit ./src/bot.lua || run
 }
 
 run
