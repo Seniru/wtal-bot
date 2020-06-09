@@ -1,19 +1,12 @@
-local JSON_BIN_ENDPOINT = "https://api.jsonbin.io/b/5e70737c05179259c0bdbfde"
-local JSON_BIN_SECRET = "$2b$10$" .. os.getenv("JSON_BIN_SECRET")
 local DATA_CHANNEL = "718723565167575061"
 local DATA_ID = "718728423475904562"
 
 local qotd = {}
 
 qotd.test = function(discord, json)
-    discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent("```json\n" .. json.stringify(
-        {
-            ["questions"] = {},
-            ["last-post"] = os.time(),
-            ["index"] = 122
-        }
-        
-    ) .. "\n```") 
+    discord:getChannel(DATA_CHANNEL):getMessage(DATA_ID):setContent([[```json
+ {"last-post":0,"questions":["What was the moment you knew you weren't a kid anymore?","What was the lowest point in life?"],"index":125}
+```]]) 
 end
 
 qotd.addQuestion = function(question, discord, json)

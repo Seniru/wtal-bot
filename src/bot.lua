@@ -8,12 +8,14 @@ local fromage = require('fromage')
 local transfromage = require('transfromage')
 local timer = require('timer')
 local json = require('json')
-local enum = require(testing and 'enum-test' or 'enum')
-local hi = require('replies')
-local qotd = require('qotd-client')
-local modsys = require('mod-sys')
-local cmds = require("cmds")
 local md5 = require('md5')
+
+local enum = require("./" .. (testing and 'enum-test' or 'enum'))
+local hi = require('./replies')
+local qotd = require('./qotd-client')
+local modsys = require('./mod-sys')
+local cmds = require("./cmds")
+local bdays = require("./bdays")
 
 local discord = discordia.Client({
     cacheAllMembers = true
@@ -46,6 +48,7 @@ loop = function()
     else
         print("[QOTD] In cooldown")
     end
+    bdays.getBirthdays(discord, nil, enum.channels.admin_chat)
     timer.setTimeout(1000 * 60 * (testing and 1 or 15), coroutine.wrap(loop))
 end
 
@@ -884,7 +887,8 @@ coroutine.wrap(function()
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        qotd.test(discord, json)
         local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
@@ -897,6 +901,9 @@ coroutine.wrap(function()
         -- profile command
         elseif mentioned:count() == 1 and msg.author.id ~= "654987403890524160" and mentioned.first.id == '654987403890524160' then
             reply(msg.author, msg.channel)
+        -- birthday command
+        elseif msg.content:find("^>%s*bdays%s*") then
+            bdays.getBirthdays(discord, msg.channel)
         elseif msg.content:find("^>%s*p%s*$") then
             getProfile(msg.member.name, msg)
         elseif msg.content:find('^>%s*p%s+<@!%d+>%s*$') and mentioned:count() == 1 and not msg.mentionsEveryone then

@@ -1,5 +1,3 @@
-local JSON_BIN_ENDPOINT = "https://api.jsonbin.io/b/5e9869195fa47104cea1b350"
-local JSON_BIN_SECRET = "$2b$10$" .. os.getenv("JSON_BIN_SECRET")
 local DATA_CHANNEL = "718723565167575061"
 local DATA_ID = "718747955557040158"
 

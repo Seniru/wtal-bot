@@ -1,5 +1,3 @@
-local JSON_BIN_ENDPOINT = "https://api.jsonbin.io/b/5e9ecde1435f5604bb4556a5"
-local JSON_BIN_SECRET = "$2b$10$" .. os.getenv("JSON_BIN_SECRET")
 local WANDBOX_ENDPOINT = "https://wandbox.org/api"
 
 local DATA_CHANNEL = "718723565167575061"
