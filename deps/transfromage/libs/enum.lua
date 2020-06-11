@@ -272,30 +272,32 @@ enum.gender = {
 	@type table
 ]]
 enum.identifier = enum {
-	bulle           = enum { 60, 03 },
-	bulleConnection = enum { 44, 01 },
-	cafeData        = enum { 30, 40 },
-	cafeState       = enum { 30, 45 },
-	cafeLike        = enum { 30, 46 },
-	cafeLoadData    = enum { 30, 41 },
-	cafeNewTopic    = enum { 30, 44 },
-	cafeSendMessage = enum { 30, 43 },
-	command         = enum { 06, 26 },
-	community       = enum { 08, 02 },
-	correctVersion  = enum { 26, 03 },
-	emote           = enum { 08, 01 },
-	emoticon        = enum { 08, 05 },
-	heartbeat       = enum({ 26, 26 }, true),
-	initialize      = enum { 28, 01 },
-	joinTribeHouse  = enum { 16, 01 },
-	loadLua         = enum { 29, 01 },
-	loginSend       = enum { 26, 08 },
-	modList         = enum { 26, 05 },
-	os              = enum { 28, 17 },
-	packetOffset    = enum { 44, 22 },
-	room            = enum { 05, 38 },
-	roomList        = enum { 26, 35 },
-	roomMessage     = enum({ 06, 06 }, true)
+	bulle                  = enum { 60, 03 },
+	bulleConnection        = enum { 44, 01 },
+	cafeData               = enum { 30, 40 },
+	cafeState              = enum { 30, 45 },
+	cafeLike               = enum { 30, 46 },
+	cafeLoadData           = enum { 30, 41 },
+	cafeNewTopic           = enum { 30, 44 },
+	cafeSendMessage        = enum { 30, 43 },
+	command                = enum { 06, 26 },
+	community              = enum { 08, 02 },
+	correctVersion         = enum { 26, 03 },
+	emote                  = enum { 08, 01 },
+	emoticon               = enum { 08, 05 },
+	heartbeat              = enum({ 26, 26 }, true),
+	initialize             = enum { 28, 01 },
+	joinTribeHouse         = enum { 16, 01 },
+	acceptTribeHouseInvite = enum { 16, 02 },
+	loadLua                = enum { 29, 01 },
+	loginSend              = enum { 26, 08 },
+	modList                = enum { 26, 05 },
+	os                     = enum { 28, 17 },
+	packetOffset           = enum { 44, 22 },
+	room                   = enum { 05, 38 },
+	roomList               = enum { 26, 35 },
+	roomMessage            = enum({ 06, 06 }, true),
+	roomPassword           = enum { 05, 39 }
 }
 --[[@
 	@name language
@@ -352,15 +354,22 @@ enum.role = enum {
 	@type int
 ]]
 enum.roomMode = enum {
-	normal    = 01,
-	bootcamp  = 02,
-	vanilla   = 03,
-	survivor  = 08,
-	racing    = 09,
-	music     = 10,
-	defilante = 11,
-	village   = 16,
-	module    = 18
+	normal     = 01,
+	bootcamp   = 02,
+	vanilla    = 03,
+	survivor   = 08,
+	racing     = 09,
+	defilante  = 10,
+	music      = 11,
+	shaman     = 13,
+	village    = 16,
+	module     = 18,
+	madchess   = 20,
+	celousco   = 22,
+	ranked     = 31,
+	duel       = 33,
+	arena      = 34,
+	domination = 42
 }
 --[[@
 	@name setting
@@ -378,7 +387,7 @@ enum.setting = {
 ]]
 enum.url = enum {
 	translation = "http://transformice.com/langues/tfz_%s",
-	authKeys    = "https://api.tocu.tk/get_transformice_keys.php?tfmid=%s&token=%s"
+	authKeys    = "https://api.tocuto.tk/get_transformice_keys.php?tfmid=%s&token=%s"
 }
 --[[@
 	@name whisperState

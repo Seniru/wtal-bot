@@ -13,13 +13,6 @@ local table_setNewClass = table.setNewClass
 local table_writeBytes = table.writeBytes
 ------------------
 
-local modulo256 = function(n)
-	-- It could be n & 0xFF but, in Lua, modulo is slightly more performatic
-	return n % 256
-end
-
-------------------
-
 local byteArray = table.setNewClass()
 byteArray.__tostring = function(this)
 	return table_writeBytes(this.stack)
@@ -28,6 +21,7 @@ end
 --[[@
 	@name new
 	@desc Creates a new instance of a Byte Array. Alias: `byteArray()`.
+	@desc Note that you must not write bytes after reading the packet. Use a new instance instead.
 	@param stack?<table> An array of bytes.
 	@returns byteArray The new Byte Array object.
 	@struct {
@@ -38,7 +32,9 @@ end
 byteArray.new = function(self, stack)
 	return setmetatable({
 		stack = (stack or { }), -- Array of bytes
-		stackLen = (stack and #stack or 0)
+		stackLen = (stack and #stack or 0),
+		stackReadPos = 1,
+		stackReadLen = 0
 	}, self)
 end
 --[[@
@@ -48,17 +44,20 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write8 = function(self, ...)
-	local tbl = { ... }
+	local bytes = { ... }
 
-	local tblLen = #tbl
-	if tblLen == 0 then
-		tblLen = 1
+	local bytesLen = #bytes
+	if bytesLen == 0 then
+		bytesLen = 1
 
-		tbl = { 0 }
+		bytes = { 0 }
 	end
-	self.stackLen = self.stackLen + tblLen
+	self.stackLen = self.stackLen + bytesLen
 
-	local bytes = table_mapArray(tbl, modulo256)
+	for i = 1, #bytes do
+		-- It could be n & 0xFF but, in Lua, modulo is slightly more performatic
+		bytes[i] = bytes[i] % 256
+	end
 	table_add(self.stack, bytes)
 	return self
 end
@@ -69,7 +68,7 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write16 = function(self, short)
-	-- (long >> 8) & 0xFF, long & 0xFF
+	-- (short >> 8), long
 	return self:write8(bit_rshift(short, 8), short)
 end
 --[[@
@@ -79,7 +78,7 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write24 = function(self, int)
-	-- (long >> 16) & 0xFF, (long >> 8) & 0xFF, long & 0xFF
+	-- (int >> 16), (int >> 8), int
 	return self:write8(bit_rshift(int, 16), bit_rshift(int, 8), int)
 end
 --[[@
@@ -89,7 +88,7 @@ end
 	@returns byteArray Object instance.
 ]]
 byteArray.write32 = function(self, long)
-	-- (long >> 24) & 0xFF, (long >> 16) & 0xFF, (long >> 8) & 0xFF, long & 0xFF
+	-- (long >> 24), (long >> 16), (long >> 8), long
 	return self:write8(bit_rshift(long, 24), bit_rshift(long, 16), bit_rshift(long, 8),	long)
 end
 --[[@
@@ -134,8 +133,7 @@ end
 	@param bool<boolean> A boolean.
 ]]
 byteArray.writeBool = function(self, bool)
-	self:write8(bool and 1 or 0)
-	return self
+	return self:write8(bool and 1 or 0)
 end
 --[[@
 	@name read8
@@ -146,8 +144,9 @@ end
 byteArray.read8 = function(self, quantity)
 	quantity = quantity or 1
 
-	local byteStack = table_arrayRange(self.stack, 1, quantity)
-	self.stack = table_arrayRange(self.stack, quantity + 1)
+	local stackReadPos = self.stackReadPos + quantity
+	local byteStack = table_arrayRange(self.stack, self.stackReadPos, stackReadPos - 1)
+	self.stackReadPos = stackReadPos
 
 	local sLen = #byteStack
 	self.stackLen = self.stackLen - sLen
