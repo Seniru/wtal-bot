@@ -888,7 +888,6 @@ coroutine.wrap(function()
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
-        qotd.test(discord, json)
         local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
