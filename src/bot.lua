@@ -48,7 +48,7 @@ loop = function()
     else
         print("[QOTD] In cooldown")
     end
-    --bdays.getBirthdays(discord, nil, enum.channels.admin_chat)
+    bdays.getBirthdays(discord, nil, enum.channels.admin_chat)
     timer.setTimeout(1000 * 60 * (testing and 1 or 15), coroutine.wrap(loop))
 end
 

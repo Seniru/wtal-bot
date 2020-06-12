@@ -8,7 +8,7 @@ local bdays = {}
 
 bdays.isInCooldown = function(discord)
     local lastPost = tonumber(discord:getChannel(DATA_CHANNEL):getMessage(LAST_POST_DATA_MSG).content)
-    return os.time() < (0 + 1 * 60 * 60 * 24)
+    return os.time() < (lastPost + 1 * 60 * 60 * 24)
 end
 
 bdays.getBirthdays = function(discord, channel, defaultChannel)
