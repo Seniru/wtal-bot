@@ -895,7 +895,7 @@ coroutine.wrap(function()
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
-        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
         local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
