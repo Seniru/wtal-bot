@@ -9,6 +9,7 @@ local transfromage = require('transfromage')
 local timer = require('timer')
 local json = require('json')
 local md5 = require('md5')
+local postgres = require("coro-postgres")
 
 local enum = require("./" .. (testing and 'enum-test' or 'enum'))
 local hi = require('./replies')
@@ -20,6 +21,8 @@ local bdays = require("./bdays")
 local discord = discordia.Client({
     cacheAllMembers = true
 })
+
+local db
 
 local forums = fromage()
 local tfm = transfromage.client:new()
@@ -884,10 +887,15 @@ coroutine.wrap(function()
 
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
+
+        db = postgres.connect {
+            database = "database"
+        }
+
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        --tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
         local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
@@ -936,6 +944,12 @@ coroutine.wrap(function()
             else
                 msg:reply("You don't have enough permissions to do this action!")
             end
+        -- postgres
+        elseif msg.content:find("^>%s*sql%s+```sql\n.+```$") and msg.author.id == "522972601488900097" then
+            local query = msg.content:match("^>%s*sql%s+```sql\n(.+)\n```$")
+            print("[SQL] " .. query)
+            local res, err, stack = db.query(query)
+            msg:reply("```json\n" .. json.stringify(res or stack) .. "\n```")
         -- mod commands
         elseif msg.content:find("^>%s*setrank%s+.+$") then
             local member, rank = msg.content:match("^>%s*setrank%s+(%+?.-#%d+)%s+(.+)")
