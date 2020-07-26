@@ -1,4 +1,4 @@
 FROM gitpod/workspace-postgres
-RUN cd /usr/local/bin \
-    curl -L https://github.com/luvit/lit/raw/master/get-lit.sh | sh \
-    cd /workspace/wtal-bot
+COPY ./install.sh /
+RUN chmod +x /install.sh
+ENTRYPOINT ["/install.sh"]
