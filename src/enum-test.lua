@@ -6,8 +6,8 @@ local enum = {
         lobby = '522976112255696896', -- no lobby here :P
         tribe_chat = '671247948406980621',
         question_otd = '522976112255696896', -- no qotd
-        admin_chat = '678894294412558337'
-    
+        admin_chat = '678894294412558337',
+        mod_log = '678894294412558337'
     },
     roles = {
         ['Passer-by']           = {id = '655375001708527616', index = 28},

@@ -423,7 +423,7 @@ kickMember = function(member, msg)
 end
 
 local reportMember = function(accused, reason, reporter)
-    guild:getChannel(enum.channels.admin_chat):send {
+    guild:getChannel(enum.channels.mod_log):send {
         embed = {
             title = ":closed_book: Report",
             fields = {
@@ -788,7 +788,9 @@ coroutine.wrap(function()
     end)
 
     tfm:on("tribeMemberGetRole", function(member, setter, role)
+        role = role == "${trad#TG_0}" and "Stooge" or role
         members[member].rank = role
+        print(role)
         setRank(member, true)
     end)
 
@@ -888,9 +890,9 @@ coroutine.wrap(function()
     discord:once("ready", function()
         guild = discord:getGuild(enum.guild)
 
-        db = postgres.connect {
+        --[[db = postgres.connect {
             database = "database"
-        }
+        }]]
 
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
@@ -948,7 +950,7 @@ coroutine.wrap(function()
         elseif msg.content:find("^>%s*sql%s+```sql\n.+```$") and msg.author.id == "522972601488900097" then
             local query = msg.content:match("^>%s*sql%s+```sql\n(.+)\n```$")
             print("[SQL] " .. query)
-            local res, err, stack = db.query(query)
+            --local res, err, stack = db.query(query)
             msg:reply("```json\n" .. json.stringify(res or stack) .. "\n```")
         -- mod commands
         elseif msg.content:find("^>%s*setrank%s+.+$") then
