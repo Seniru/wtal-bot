@@ -790,7 +790,6 @@ coroutine.wrap(function()
     tfm:on("tribeMemberGetRole", function(member, setter, role)
         role = role == "${trad#TG_0}" and "Stooge" or role
         members[member].rank = role
-        print(role)
         setRank(member, true)
     end)
 
