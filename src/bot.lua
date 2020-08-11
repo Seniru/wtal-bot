@@ -332,6 +332,7 @@ askQuestion = function(member, target, force)
                     description = res.question
                 }
             }
+            guild:getChannel(enum.channels.question_otd):send("<@&742418187198660719>")
             if target then target:send("Asked a new question!") end
         else
             if target then
