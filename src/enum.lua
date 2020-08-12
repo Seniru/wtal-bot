@@ -44,7 +44,7 @@ local enum = {
         ['member']              = {id = '678097505975533599'},
         ['cmder']               = {id = '702120436279934996'}
     },
-    totalRanks = 30
+    totalRanks = 29
 }
 
 return enum
