@@ -326,13 +326,13 @@ askQuestion = function(member, target, force)
         local _, res, success = qotd.retrieveQuestion(discord, json, force)
         if success then
             guild:getChannel(enum.channels.question_otd):send {
+		content = "<@&742418187198660719>",
                 embed = {
                     color = 0x2987ba,
                     title = "QOTD #" .. res.index,
                     description = res.question
                 }
             }
-            guild:getChannel(enum.channels.question_otd):send("<@&742418187198660719>")
             if target then target:send("Asked a new question!") end
         else
             if target then
