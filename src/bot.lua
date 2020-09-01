@@ -195,7 +195,7 @@ local getProfile = function(name, msg)
 
         --extracting data from html chunk
         p.title = cfm:match("«(.+)»")
-        p.title = encodeUrl(p.title or 'Little mouse')
+        p.title = p.title or 'Little mouse'
         p.level = cfm:match("<b>Level</b>: (%d+)<br>")
         p.outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
         --returning the string containing profile data
