@@ -196,8 +196,6 @@ local getProfile = function(name, msg)
         --extracting data from html chunk
         p.title = cfm:match("«(.+)»")
         p.title = encodeUrl(p.title or 'Little mouse')
-        local _, tb = http.request('GET', 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=' .. os.getenv('TRANSLATE_KEY') .. '&text=' .. p.title .. '&lang=es-en&format=plain')
-        p.title = json.parse(tb)["text"][1]
         p.level = cfm:match("<b>Level</b>: (%d+)<br>")
         p.outfit = cfm:match("<a href=\"(https://cheese.formice.com/dressroom.+)\" target=\"_blank\">View outfit in use</a>")
         --returning the string containing profile data
