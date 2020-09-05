@@ -2071,7 +2071,8 @@ client.start = coroutine_makef(function(self, tfmId, token)
 			packet:writeUTF(self._gameConnectionKey)                      
 		end
 		packet:writeUTF("Desktop"):writeUTF('-'):write32(0x1FBD):writeUTF('')
-			:writeUTF("86bd7a7ce36bec7aad43d51cb47e30594716d972320ef4322b7d88a85904f0ed")
+			:write8(0)
+			:writeUTF("@ca26ba3ada3fc0aadba7d94e5677bee000333d8f46bab4c3cb32e615587e7212")
 			:writeUTF("A=t&SA=t&SV=t&EV=t&MP3=t&AE=t&VE=t&ACC=t&PR=t&SP=f&SB=f&DEB=f&V=LNX 29,0,\z
 			0,140&M=Adobe Linux&R=1920x1080&COL=color&AR=1.0&OS=Linux&ARCH=x86&L=en&IME=t&PR32=t&P\z
 			R64=t&LS=en-US&PT=Desktop&AVD=f&LFD=f&WD=f&TLS=t&ML=5.1&DP=72")
