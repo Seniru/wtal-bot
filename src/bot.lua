@@ -610,7 +610,7 @@ end
 
 local runCommand = function(cmd, input, target)
     xpcall(function()
-    
+
         local cmd = commands[cmd]
         if cmd then
             local success, res = cmds.runCommand(cmd.source, cmd.runner, input, http, json)
@@ -642,7 +642,7 @@ local runCommand = function(cmd, input, target)
     end)
 end
 
-local displayCommands = function(target)   
+local displayCommands = function(target)
     local res = ""
     local count = 0
     for cmd, data in next, commands do
@@ -656,7 +656,7 @@ local displayCommands = function(target)
                     color = 0x2987ba
                 }
             }
-            res = ""   
+            res = ""
         end
     end
     target:send {
@@ -668,7 +668,7 @@ local displayCommands = function(target)
                 text = "Total commands: " .. count
             }
         }
-    }    
+    }
 end
 
 local displayCommandInfo = function(command, target)
@@ -895,6 +895,7 @@ coroutine.wrap(function()
         forums.connect('Wtal#5272', os.getenv('FORUM_PASSWORD'))
         print("Starting transformice client...")
         tfm:handlePlayers(true)
+        tfm:setLanguage("en")
         tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
         local _, res = cmds.getCommands(discord, json)
         commands = res
