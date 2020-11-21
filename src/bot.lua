@@ -1,3 +1,4 @@
+local start = os.time()
 math.randomseed(os.time())
 
 local testing = false
@@ -707,13 +708,43 @@ local normalizeMessage = function(body)
         end)
 end
 
+local displayBotInfo = function(target)
+    local uptime = (os.difftime(os.time(), start))
+    
+    local handle = io.popen([[free -m | awk 'NR==2{printf "%s/%sMB `(%.2f%%)`\n", $3,$2,$3*100/$2 }']])
+    local memory = handle:read("*a")
+    handle:close()
+
+    handle = io.popen([[df -h | awk '$NF=="/"{printf "%d/%dGB `(%s)`\n", $3,$2,$5}']])
+    local disk = handle:read("*a")
+    handle:close()
+
+    handle = io.popen([[top -bn1 | grep load | awk '{printf "%.2f\n", $(NF-2)}' ]])
+    local cpu = handle:read("*a")
+    handle:close()
+
+    target:send {
+        embed = {
+            title = "Info",
+            thumbnail = {url = discord.user.avatarURL},
+            fields = {
+                {name = ":clock1: Uptime", value = ((tonumber(os.date("%d", uptime)) - 1) .. os.date(" day(s), %H hour(s), %M minute(s) and %S second(s)", uptime))},
+                {name = "📈 Memory Usage", value = memory, inline = true},
+                {name = ":floppy_disk: Disk Usage", value = disk, inline = true},
+                {name = ":computer: CPU", value = cpu, inline = true}
+            },
+            color = 0x3333ff
+        }
+    }
+end
+
 coroutine.wrap(function()
 
     --[[Transfromage events]]
 
     tfm:once("ready", function()
         print('Logging into transformice...')
-	    tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
+	    -- tfm:connect("Wtal#5272", os.getenv('FORUM_PASSWORD'))
     end)
 
     tfm:on("connection", function(name, comm, id, time)
@@ -896,7 +927,7 @@ coroutine.wrap(function()
         print("Starting transformice client...")
         tfm:handlePlayers(true)
         tfm:setLanguage("en")
-        tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
+        -- tfm:start("89818485", os.getenv('TRANSFROMAGE_KEY'))
         local _, res = cmds.getCommands(discord, json)
         commands = res
     end)
@@ -945,6 +976,8 @@ coroutine.wrap(function()
             else
                 msg:reply("You don't have enough permissions to do this action!")
             end
+        elseif msg.content:find("^>%s*info%s*") then
+            displayBotInfo(msg.channel)
         -- postgres
         elseif msg.content:find("^>%s*sql%s+```sql\n.+```$") and msg.author.id == "522972601488900097" then
             local query = msg.content:match("^>%s*sql%s+```sql\n(.+)\n```$")
