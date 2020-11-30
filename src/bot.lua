@@ -951,11 +951,7 @@ coroutine.wrap(function()
 
     discord:on('messageCreate', function(msg)
         local mentioned = msg.mentionedUsers
-				
-	if msg.author.id == "528834917719605251" or msg.author.id == "522972601488900097" then
-		msg:addReaction("<:peepee:641990765895221259>")				
-	end
-				
+								
         --For testing purposes
         if msg.content:lower() == '> ping' then
             msg:reply('Pong!')
