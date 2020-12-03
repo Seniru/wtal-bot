@@ -1177,18 +1177,33 @@ packetListener = {
 			packet:read8(packet:read8())
 
 			local rooms, counter = { }, 0
+			local roomMode = packet:read8()
 			local pinned, pinnedCounter = { }, 0
 
-			local roomType, community, name, count, max, onFcMode
-			local roomMode = packet:read8()
+			local isPinned, language, country, name, count, max, onFcMode
 			while packet.stackLen > 0 do
-				roomType = packet:read8()
-				if roomType == 0 then -- Normal room
-					community = packet:read8()
-					name = packet:readUTF()
-					count = packet:read16() -- total mice
-					max = packet:read8() -- max total mice
-					onFcMode = packet:readBool() -- funcorp mode
+				isPinned = packet:readBool()
+				language = packet:readUTF()
+				country = packet:readUTF()
+				name = packet:readUTF()
+
+				if isPinned then
+					count = tonumber(packet:readUTF())
+					local command = packet:readUTF()
+					local args = packet:readUTF()
+					for roomName, roomCount in args:gmatch('&~(.-),(%d+)') do
+						pinnedCounter = pinnedCounter + 1
+						pinned[pinnedCounter] = {
+							name = roomName,
+							totalPlayers = roomCount,
+							language = language,
+							country = country
+						}
+					end
+				else
+					count = packet:read16()
+					max = packet:read8()
+					onFcMode = packet:readBool()
 
 					counter = counter + 1
 					rooms[counter] = {
@@ -1196,21 +1211,8 @@ packetListener = {
 						totalPlayers = count,
 						maxPlayers = max,
 						onFuncorpMode = onFcMode,
-						community = community
-					}
-				elseif roomType == 1 then -- Pinned rooms / modules
-					community = packet:read8()
-					name = packet:readUTF()
-					count = packet:readUTF() -- total mice
-					count = tonumber(count) or count -- Make it a number
-					packet:readUTF() -- mjj
-					packet:readUTF() -- m room/#module
-
-					pinnedCounter = pinnedCounter + 1
-					pinned[pinnedCounter] = {
-						name = name,
-						totalPlayers = count,
-						community = community
+						language = language,
+						country = country
 					}
 				end
 			end
@@ -1227,14 +1229,16 @@ packetListener = {
 						totalPlayers = 0, -- Number of players in the room.
 						maxPlayers = 0, -- Maximum Number of players the room can get.
 						onFuncorpMode = false, -- Whether the room is having a funcorp event (orange name) or not.
-						community = 0 -- The community of the room.
+						language = int, -- Language of room
+						country = int, -- Country of room
 					}
 				}
 				@struct @pinned {
 					[i] = {
-						name = "", -- The name of the object.
-						totalPlayers = 0, -- Number of players in the object counter. (Might be a string)
-						community = 0 -- The community of the object.
+						name = "", -- The name of the room.
+						totalPlayers = 0, -- Number of players in the room.
+						language = int, -- Language of room
+						country = int, -- Country of room
 					}
 				}
 			]]
@@ -2081,7 +2085,7 @@ client.start = coroutine_makef(function(self, tfmId, token)
 	self.main:connect(enum.setting.mainIp)
 
 	self.main.event:once("_socketConnection", function()
-		local packet = byteArray:new():write16(self._gameVersion)
+		local packet = byteArray:new():write16(self._gameVersion):write16(8)
 		if not self._hasSpecialRole then
 			packet
 				:writeUTF("en")
@@ -2205,6 +2209,7 @@ client.setLanguage = function(self, language)
 
 	self.language = language
 end
+client.setCommunity = "setLanguage"
 --[[@
 	@name handlePlayers
 	@desc Toggles the field _\_handle\_players_ of the instance.
