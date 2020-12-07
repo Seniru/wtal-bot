@@ -1316,7 +1316,6 @@ packetListener = {
 						posts = 0, -- The number of messages in the topic.
 						lastUserName = "", -- The name of the last user that posted in the topic.
 						timestamp = 0, -- When the topic was created.
-
 						-- The event "cafeTopicLoad" must be triggered so the fields below exist.
 						author = "", -- The name of the topic author.
 						messages = {
@@ -1456,7 +1455,6 @@ packetListener = {
 					posts = 0, -- The number of messages in the topic.
 					lastUserName = "", -- The name of the last user that posted in the topic.
 					timestamp = 0, -- When the topic was created.
-
 					-- The event "cafeTopicLoad" must be triggered so the fields below exist.
 					author = "", -- The name of the topic author.
 					messages = {
@@ -2085,7 +2083,7 @@ client.start = coroutine_makef(function(self, tfmId, token)
 	self.main:connect(enum.setting.mainIp)
 
 	self.main.event:once("_socketConnection", function()
-		local packet = byteArray:new():write16(self._gameVersion):write16(8)
+		local packet = byteArray:new():write16(self._gameVersion)
 		if not self._hasSpecialRole then
 			packet
 				:writeUTF("en")
