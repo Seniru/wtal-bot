@@ -929,6 +929,11 @@ coroutine.wrap(function()
     tfm:on("tribeMemberKick", function(member, kicker)
         guild:getChannel(enum.channels.tribe_chat):send("> " .. kicker .. " has kicked " .. member .. " out of the tribe.")
     end)
+		
+   tfm:on("serverReboot", function(ms)
+	guild:getChannel(enum.channels.tribe_chat):send(("<@!522972601488900097> [SERVER] Server will restart in %s ms"):format(ms))
+	timer:setTimeout(1000 * 60 * 2, function() os.exit(1) end)
+   end)
 
 
     --[[ Discord events]]
