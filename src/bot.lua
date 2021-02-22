@@ -26,7 +26,7 @@ local discord = discordia.Client({
 local db
 
 local forums = fromage()
-local tfm = transfromage.client:new()
+local tfm = transfromage.client:new(nil, nil, true)
 local tfmEnum = transfromage.enum
 local byteArray = transfromage.byteArray
 
