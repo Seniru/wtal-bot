@@ -993,7 +993,7 @@ coroutine.wrap(function()
             deleteQuestion(msg.content:match("^>%s*qotd delete (%d+)$"), msg.member, msg.channel)
             -- restart command
         elseif msg.content:lower() == "> restart" then
-            if msg.member:hasRole(enum.roles["manager"].id) then
+            if msg.member:hasRole(enum.roles["manager"].id) or tostring(msg.author.id) == "397139242247127060" then
                 msg:reply("Restarting the bot...")
                 os.exit(1)
             else
