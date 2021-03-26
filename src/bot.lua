@@ -931,8 +931,11 @@ coroutine.wrap(function()
     end)
 		
    tfm:on("serverReboot", function(ms)
-	guild:getChannel(enum.channels.tribe_chat):send(("<@!522972601488900097> [SERVER] Server will restart in %s ms"):format(ms))
-	timer.setTimeout(1000 * 60 * 2, function() os.exit(1) end)
+	guild:getChannel(enum.channels.tribe_chat):send(("<@!522972601488900097> [SERVER] Server will restart in %s seconds"):format(ms/1000))
+	if ms == 1000 then
+        guild:getChannel(enum.channels.tribe_chat):send("Attempting to restart the bot, in-case the bot does not reconnect please manually reboot.")
+        os.exit(1)
+    end
    end)
 
 
