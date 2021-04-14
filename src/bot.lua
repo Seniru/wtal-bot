@@ -813,7 +813,7 @@ coroutine.wrap(function()
             tfm:kickTribeMember(member)
             tfm:sendTribeMessage(member .. " is in the blacklist! Please do not invite them back")
         else
-            tfm:sendTribeMessage("Welcome to 'We Talk a Lot' " .. member .. "!")
+            tfm:sendTribeMessage("Welcome to 'A place to call home' " .. member .. "!")
             members[member] = {rank='Stooge', joined=os.time(), name=member}
             setRank(member, true)
 		    onlineMembers[member] = true
