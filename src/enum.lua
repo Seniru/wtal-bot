@@ -11,7 +11,7 @@ local enum = {
     },
     roles = {
         ['Passer-by']           = {id = '571736272163438650', index = 20},
-        ['House Spider']        = {id = '831819625150939137', index = 19},
+        ['House Rat']           = {id = '831819625150939137', index = 19},
         ['The Groundskeeper']   = {id = '831819525321785354', index = 18},
         ['The Gardener']        = {id = '831819454069473300', index = 17},
         ['The Footman']         = {id = '831819382396944416', index = 16},
