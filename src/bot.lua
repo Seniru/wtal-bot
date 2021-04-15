@@ -882,7 +882,10 @@ coroutine.wrap(function()
                 }
                 verificationKeys[key] = nil
             end
+        elseif message == "inv" then
+            tfm:inviteMember(playerName)
         end
+
     end)
 
     tfm:on("newPlayer", function(playerData)

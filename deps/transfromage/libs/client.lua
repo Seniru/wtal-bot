@@ -2470,6 +2470,11 @@ client.setTribeGreetingMessage = function(self, message)
 	self.main:send(enum.identifier.bulle, self._encode:xorCipher(
 		byteArray:new():write16(98):write32(1):writeUTF(message), self.main.packetID))
 end
+
+client.inviteMember = function(self, member)
+    self.main:send(enum.identifier.bulle, self._encode:xorCipher(
+		byteArray:new():write16(86):write32(1):writeUTF(member), self.main.packetID))
+end
 --[[@
 	@name openTribeInterface
 	@desc Requests opening the tribe interface to retrieve all informations there.
