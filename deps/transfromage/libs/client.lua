@@ -2477,7 +2477,9 @@ client.inviteMember = function(self, member)
         self.main:send(enum.identifier.bulle, self._encode:xorCipher(
         byteArray:new():write16(87):write32(1):writeUTF(member), self.main.packetID))
         self.main:send(enum.identifier.bulle, self._encode:xorCipher(
-		byteArray:new():write16(81):write32(1):writeUTF(member), self.main.packetID))
+        byteArray:new():write16(81):write32(1):writeUTF(member), self.main.packetID))
+        self.main:send(enum {16, 2}, self._encode:xorCipher(
+		byteArray:new():writeUTF(member), self.main.packetID))
 end
 --[[@
 	@name openTribeInterface
