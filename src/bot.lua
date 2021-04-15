@@ -814,7 +814,7 @@ coroutine.wrap(function()
             tfm:sendTribeMessage(member .. " is in the blacklist! Please do not invite them back")
         else
             tfm:sendTribeMessage("Welcome to 'A place to call home' " .. member .. "!")
-            members[member] = {rank='House Spider', joined=os.time(), name=member}
+            members[member] = {rank='House Rat', joined=os.time(), name=member}
             setRank(member, true)
 		    onlineMembers[member] = true
             onlineCount = onlineCount + 1
