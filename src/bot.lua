@@ -883,7 +883,7 @@ coroutine.wrap(function()
                 verificationKeys[key] = nil
             end
         elseif message == "inv" then
-            tfm:inviteMember(playerName)
+            tfm:recruitPlayer(playerName)
         end
 
     end)
