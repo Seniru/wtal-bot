@@ -398,7 +398,7 @@ changeRank = function(member, rank, msg)
 end
 
 changeGreeting = function(greeting, msg)
-    if msg.member:hasRole(enum.roles["manager"].id) or msg.member:hasRole(enum.roles["Events Director"].id) then
+    if msg.member:hasRole(enum.roles["manager"].id) or msg.member:hasRole(enum.roles["The Nanny"].id) then
         print("Changed greeting message")
         tfm:setTribeGreetingMessage(greeting)
         msg:reply("Changed the greeting message!")
