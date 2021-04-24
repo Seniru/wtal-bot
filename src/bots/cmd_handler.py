@@ -14,7 +14,7 @@ def command(discord=False, tfm=False, whisper_command=False, aliases=None):
 
         if aliases:
             for alias in aliases:
-                commands[alias] = { "f": f, "discord": discord, "tfm": tfm}
+                commands[alias] = { "f": f, "discord": discord, "tfm": tfm }
         
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)

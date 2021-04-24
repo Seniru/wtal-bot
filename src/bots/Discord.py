@@ -45,8 +45,31 @@ class Discord(discord.Client):
                 "color": 0x0066ff
             }))
 
+    async def on_member_update(self, before, after):
 
-        
+        verified_role = self.main_guild.get_role(data["roles"]["verified"])
+
+        if not verified_role in after.roles:
+            return
+
+        normalized_nick = utils.get_tfm_nick_format(after.nick)
+        tribe = await self.tfm.getTribe(True)
+        print(normalized_nick.lower())
+        tribe_member = tribe.get_member(normalized_nick.lower())
+        rank_role = self.main_guild.get_role(data["ranks"]["Passer-by" if not tribe_member else tribe_member.rank.name])
+
+        if not rank_role:
+            pass
+        if rank_role in after.roles:
+            return # No need to add if the role is already there
+
+        rank_roles = tuple(discord.utils.get(self.main_guild.roles, name=n) for n in data["ranks"].keys())
+       
+        for role in rank_roles:
+            if role in after.roles:
+                await after.remove_roles(role)
+
+        await after.add_roles(rank_role)
 
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)

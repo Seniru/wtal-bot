@@ -17,3 +17,13 @@ subscripts = re.split("", "₀₁₂₃₄₅₆₇₈₉")[1:-1]
 def get_discord_nick_format(name):
     name, tag = extract_name_and_tag(normalize_name(name))
     return name + " # " + subscripts[int(tag[0])] + subscripts[int(tag[1])] + subscripts[int(tag[2])] + subscripts[int(tag[3])] # sorry but yes
+
+def get_tfm_nick_format(nick):
+    name, tag = nick[:-7], nick[-4:]
+    try:
+        return "{}#{}{}{}{}".format(name, subscripts.index(tag[0]), subscripts.index(tag[1]), subscripts.index(tag[2]), subscripts.index(tag[3])) # sorry again)
+    except Exception:
+        return None
+
+
+print(get_discord_nick_format("Aaaaaa#4087"))
