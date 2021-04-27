@@ -2,9 +2,13 @@ import re
 import discord
 import os
 import utils
+import json
+import requests
 
 from data import data
 from bots.cmd_handler import commands
+
+WANDBOX_ENDPOINT = "https://wandbox.org/api"
 
 intents = discord.Intents.default()
 intents.members = True
@@ -12,14 +16,20 @@ intents.members = True
 class Discord(discord.Client):
 
     def __init__(self):
+        
         super().__init__(intents = intents)
         self.client_type = "Discord"
         self.keys = {}
         self.main_guild = None
+        self.data_channel = None
+        self.ccmds = {}
         
     async def on_ready(self):
         print("[INFO][DISCORD] Client is ready!")
         self.main_guild = self.get_guild(data["guild"])
+        self.data_channel = self.get_guild(data["data_guild"]).get_channel(data["channels"]["data"])
+        self.ccmds = await self.data_channel.fetch_message(data["data"]["ccmds"])
+        self.ccmds = json.loads(self.ccmds.content[7:-3])
 
     async def on_message(self, message):
         if message.content.startswith(">"):
@@ -28,6 +38,36 @@ class Discord(discord.Client):
 
             if args[0] in commands and commands[args[0]]["discord"]:
                 await commands[args[0]]["f"](args[1:], message, self)
+            elif args[0] in self.ccmds:
+
+                ccmd = self.ccmds[args[0]]
+                code = requests.get(ccmd["source"]).content.decode("utf-8")
+
+                stdin = content[len(args[0]) + 1:]
+
+                res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
+                    data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "") }),
+                    headers = { "content-Type": "application/json" }
+                )
+
+                if res.status_code != 200:
+                    return await message.reply(":x: | We encountered an internal error. Please try again soon!")
+
+                res = json.loads(res.content.decode("utf-8"))
+
+                if res["status"] != "0":
+                    return await message.reply(embed = discord.Embed.from_dict({
+                        "title": ":x: Error in the command",
+                        "description": "Contact the author of this command to fix it\n\n**Error log**:\n ```\n{}```".format((res["program_error"] or "")),
+                        "color": 0xcc0000
+
+                    }))
+
+                res = json.loads(res["program_output"])
+                if not res:
+                    return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
+
+                await message.reply(embed = discord.Embed.from_dict(res))
 
     async def on_member_join(self, member):
         error = False
