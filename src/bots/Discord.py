@@ -52,7 +52,7 @@ class Discord(discord.Client):
         if not verified_role in after.roles:
             return
 
-        normalized_nick = utils.get_tfm_nick_format(after.nick)
+        normalized_nick = utils.get_tfm_nick_format(after.nick) or ""
         tribe = await self.tfm.getTribe(True)
         print(normalized_nick.lower())
         tribe_member = tribe.get_member(normalized_nick.lower())

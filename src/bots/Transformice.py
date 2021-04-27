@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import re
+import requests
 
 import data
 import utils
@@ -106,3 +107,5 @@ class Transformice(aiotfm.Client):
 		discord_nick = utils.get_discord_nick_format(utils.normalize_name(target))
 		member = self.discord.main_guild.get_member_named(discord_nick)
 		await self.discord.on_member_update(member, member)
+
+		

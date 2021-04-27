@@ -25,5 +25,13 @@ def get_tfm_nick_format(nick):
     except Exception:
         return None
 
+get = lambda l, x, d: l[x:x+1] and l[x] or d
 
-print(get_discord_nick_format("Aaaaaa#4087"))
+def search(pattern, str):
+    res = re.search(pattern, str)
+    groups = res.groups() if res else None
+    if groups and len(groups) == 1:
+        return groups[0]
+    return groups
+
+print(get_discord_nick_format("King_seniru#5890"))
