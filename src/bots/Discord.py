@@ -46,7 +46,7 @@ class Discord(discord.Client):
                 stdin = content[len(args[0]) + 1:]
 
                 res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
-                    data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "") }),
+                    data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "''") }),
                     headers = { "content-Type": "application/json" }
                 )
 
@@ -117,8 +117,13 @@ class Discord(discord.Client):
         await member.send(f"```verify  {key}```")     
         self.keys[key] = member
 
+    async def update_ccmds(self):
+        cmd_data = await self.data_channel.fetch_message(data["data"]["ccmds"])
+        await cmd_data.edit(content = """
+        ```json
+        {}
+        ```
+        """.format(json.dumps(self.ccmds)))
+
     def set_tfm_instance(self, tfm):
         self.tfm = tfm
-
-    
-
