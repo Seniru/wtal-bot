@@ -18,11 +18,11 @@ def command(discord=False, tfm=False, whisper_command=False, aliases=None, allow
 
     def decorator(f):
         functools.wraps(f)
-        commands[f.__name__] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command }
+        commands[f.__name__] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command, "allowed_roles": allowed_roles }
 
         if aliases:
             for alias in aliases:
-                commands[alias] = { "f": f, "discord": discord, "tfm": tfm }
+                commands[alias] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command, "allowed_roles": allowed_roles }
         
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
