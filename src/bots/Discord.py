@@ -38,17 +38,18 @@ class Discord(discord.Client):
 
             if args[0] in commands and commands[args[0]]["discord"]:
                 cmd = commands[args[0]]
-                for role in cmd["allowed_roles"]:
-                    if self.main_guild.get_role(role) in message.author.roles:
-                        break
-                else:
-                    return await message.reply(embed = discord.Embed.from_dict({
-                        "title": ":x: Missing permissions",
-                        "description": "You need 1 of the following roles to use this command: \n{}".format(
-                            ", ".join(list(map(lambda role: "<@&{}>".format(role), cmd["allowed_roles"])))
-                        ),
-                        "color": 0xcc0000
-                    }))
+                if cmd["allowed_roles"]:
+                    for role in cmd["allowed_roles"]:
+                        if self.main_guild.get_role(role) in message.author.roles:
+                            break
+                    else:
+                        return await message.reply(embed = discord.Embed.from_dict({
+                            "title": ":x: Missing permissions",
+                            "description": "You need 1 of the following roles to use this command: \n{}".format(
+                                ", ".join(list(map(lambda role: "<@&{}>".format(role), cmd["allowed_roles"])))
+                            ),
+                            "color": 0xcc0000
+                        }))
 
                 await cmd["f"](args[1:], message, self)
             elif args[0] in self.ccmds:
