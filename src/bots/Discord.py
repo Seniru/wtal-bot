@@ -108,6 +108,8 @@ class Discord(discord.Client):
 
     async def on_member_update(self, before, after):
 
+        if (not before) or (not after): return
+
         verified_role = self.main_guild.get_role(data["roles"]["verified"])
 
         if not verified_role in after.roles:

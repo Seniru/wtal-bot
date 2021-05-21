@@ -9,6 +9,7 @@ import data
 import utils
 
 from bots.cmd_handler import commands
+from bots.commands.mod import kick
 
 class Transformice(aiotfm.Client):
 	def __init__(self, name, password, loop, discord, community=0):
@@ -74,28 +75,32 @@ class Transformice(aiotfm.Client):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> **[{author}]** {message}")
 
 	async def on_tribe_member_get_role(self, setter, target, role):
-		await self.update_member(target)
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has changed the rank of {} to {}.".format(
 			utils.normalize_name(setter),
 			utils.normalize_name(target),
 			role
 		))
+		await self.update_member(target)
 
 	async def on_tribe_new_member(self, name):
-		await self.update_member(name)
+		name = utils.normalize_name(name)
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} just joined the tribe!.".format(utils.normalize_name(name)))
+		if self.discord.mod_data["blacklist"].get(name):
+			await kick([name], None, self.discord) # passing self.discord is just a hacky approach here
+			return await self.sendTribeMessage(f"{name} is in the blacklist, please do not invite them again!")
 		await self.sendTribeMessage(f"Welcome to 'A place to call home' {name}!")
+		await self.update_member(name)
 
 	async def on_tribe_member_left(self, name):
-		await self.update_member(name)
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has left the tribe ;c".format(utils.normalize_name(name)))
+		await self.update_member(name)
 
 	async def on_tribe_member_kicked(self, name, kicker):
-		await self.update_member(name)
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has kicked {} out of the tribe!".format(
 			utils.normalize_name(kicker),
 			utils.normalize_name(name)
 		))
+		await self.update_member(name)
 
 
 	async def on_whisper(self, message):

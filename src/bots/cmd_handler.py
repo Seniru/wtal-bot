@@ -48,15 +48,20 @@ async def qotd(args, msg, client):
 
 from .commands import mod
 
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.setrank)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.kick)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.blacklist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.whitelist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warnings)
-command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.kick)
 
 
 @command(discord=True)
 async def ping(args, msg, client):
     await msg.reply("Pong")
+
+@command(tfm=True, whisper_command=True)
+async def inv(args, msg, client):
+    await client.recruit(msg.author.username)
 
 @command(discord=True, aliases=["t"])
 async def tc(args, msg, client):
@@ -80,7 +85,7 @@ async def who(args, msg, client):
             fields[-1]["value"] += "• :{}: {}  [*`{}`*]\n".format(
                 ["transgender_symbol", "female_sign", "male_sign"][member.gender],
                 f"{name}`#{tag}`",
-                member.room.replace("*", "\*")
+                member.room.replace("*", r"\*")
             )
 
         await msg.channel.send(
