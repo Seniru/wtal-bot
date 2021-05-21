@@ -38,6 +38,21 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["cmder"] ])(ccmds.ecmd)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["cmder"] ])(ccmds.dcmd)
 
+from .commands import qotd as qhandler
+
+@command(discord = True, allowed_roles = [ data["roles"]["admin"] ])
+async def qotd(args, msg, client):
+    if len(args) > 0:
+        if hasattr(qhandler, args[0]):
+            await qhandler.__getattribute__(args[0])(args[1:], msg, client)
+
+from .commands import mod
+
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.blacklist)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.whitelist)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warnings)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.kick)
+
 
 @command(discord=True)
 async def ping(args, msg, client):

@@ -28,8 +28,15 @@ class Discord(discord.Client):
         print("[INFO][DISCORD] Client is ready!")
         self.main_guild = self.get_guild(data["guild"])
         self.data_channel = self.get_guild(data["data_guild"]).get_channel(data["channels"]["data"])
+
         self.ccmds = await self.data_channel.fetch_message(data["data"]["ccmds"])
         self.ccmds = json.loads(self.ccmds.content[7:-3])
+
+        self.questions = await self.data_channel.fetch_message(data["data"]["qotd"])
+        self.questions = json.loads(self.questions.content[7:-3])
+
+        self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
+        self.mod_data = json.loads(self.mod_data.content[7:-3])
 
     async def on_message(self, message):
         if message.content.startswith(">"):
@@ -138,6 +145,22 @@ class Discord(discord.Client):
         {}
         ```
         """.format(json.dumps(self.ccmds)))
+
+    async def update_qotd(self):
+        qotd_data = await self.data_channel.fetch_message(data["data"]["qotd"])
+        await qotd_data.edit(content = """
+        ```json
+        {}
+        ```
+        """.format(json.dumps(self.questions)))
+
+    async def update_mod_data(self):
+        mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
+        await mod_data.edit(content = """
+        ```json
+        {}
+        ```
+        """.format(json.dumps(self.mod_data)))
 
     def set_tfm_instance(self, tfm):
         self.tfm = tfm
