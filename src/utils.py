@@ -2,13 +2,12 @@ import random
 import re
 
 from hashlib import sha256
-from html.parser import HTMLParser
-html = HTMLParser()
+from six.moves import html_parser
+html = html_parser.HTMLParser()
 
 
 def normalize_name(name):
     return name[0].upper() + name[1:]
-
 
 def extract_name_and_tag(name):
     return ((name[:-5], name[-4:]) if "#" in name else (name, ""))
@@ -77,5 +76,6 @@ def normalize_msg_from_tc(msg, discord):
                 return f"@{ role.name }"
         return g
     return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, html.unescape(msg))
+    
 
 print(get_discord_nick_format("King_seniru#0095"))
