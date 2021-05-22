@@ -2,9 +2,7 @@ import random
 import re
 
 from hashlib import sha256
-from six.moves import html_parser
-html = html_parser.HTMLParser()
-
+from w3lib.html import replace_entities
 
 def normalize_name(name):
     return name[0].upper() + name[1:]
@@ -75,7 +73,5 @@ def normalize_msg_from_tc(msg, discord):
             if role := discord.main_guild.get_role(int(match[4])):
                 return f"@{ role.name }"
         return g
-    return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, html.unescape(msg))
+    return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
     
-
-print(get_discord_nick_format("King_seniru#0095"))
