@@ -1,3 +1,6 @@
+import re
+import utils
+
 from discord import Embed
 
 async def blacklist(args, msg, client):
@@ -64,3 +67,27 @@ async def setrank(args, msg, client):
             await client.tfm.sendCP(112, Packet().writeUTF(name).write8(r.id))
             return await msg.reply(":white_check_mark: | Changed the rank of {} to {}".format(name, rank))
     return await msg.reply(":x: Couldn't find the specified role (role: {})".format(rank))
+
+async def nick(args, msg, client):
+
+    if len(args) < 2:
+        return await msg.reply(":x: | Invalid syntax (`> nick [@member|id] [nick]`)")
+
+    id = re.match(r"(<@!)?(\d+)>?", args[0])
+    id = int(id[2]) if id else None
+    if not id:
+        return await msg.reply(":x: | Invalid syntax (`> nick [@member|id] [nick]`)")
+
+    member = client.main_guild.get_member(id)
+    if not member:
+        return await msg.reply(":x: | Couldn't find that member.")
+
+    newnick = utils.get_discord_nick_format(args[1])
+    if not newnick:
+        return await msg.reply(":x: | The nickname format is not supported")
+
+    try:
+        await member.edit(nick=newnick)
+        await msg.add_reaction("✅")
+    except Exception as e:
+        await msg.reply(":x: | {}".format(e))

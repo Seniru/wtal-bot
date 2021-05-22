@@ -72,7 +72,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_tribe_message(self, author, message):
 		author = utils.normalize_name(author)
-		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> **[{author}]** {message}")
+		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(utils.normalize_msg_from_tc(f"> **[{author}]** {message}", self.discord))
 
 	async def on_tribe_member_get_role(self, setter, target, role):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has changed the rank of {} to {}.".format(

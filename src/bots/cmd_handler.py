@@ -53,7 +53,7 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.blacklist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.whitelist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warnings)
-
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.nick)
 
 @command(discord=True)
 async def ping(args, msg, client):
@@ -65,7 +65,8 @@ async def inv(args, msg, client):
 
 @command(discord=True, aliases=["t"])
 async def tc(args, msg, client):
-    await client.tfm.sendTribeMessage("[" + msg.author.nick + "] " + " ".join(args))
+    await client.tfm.sendTribeMessage(utils.normalize_msg_from_discord("[" + msg.author.nick + "] " + " ".join(args), client))
+    #await client.tfm.sendTribeMessage("[" + msg.author.nick + "] " + " ".join(args))
 
 @command(discord=True, tfm=True)
 async def who(args, msg, client):

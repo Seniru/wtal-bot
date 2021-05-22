@@ -117,7 +117,6 @@ class Discord(discord.Client):
 
         normalized_nick = utils.get_tfm_nick_format(after.nick) or ""
         tribe = await self.tfm.getTribe(True)
-        print(normalized_nick.lower())
         tribe_member = tribe.get_member(normalized_nick.lower())
         rank_role = self.main_guild.get_role(data["ranks"]["Passer-by" if not tribe_member else tribe_member.rank.name])
 
@@ -163,6 +162,17 @@ class Discord(discord.Client):
         {}
         ```
         """.format(json.dumps(self.mod_data)))
+
+    def search_member(self, name, deep_check=False):
+        if member := self.main_guild.get_member_named(utils.get_discord_nick_format(name)):
+            return member
+        if not deep_check: return None
+        # deep checking (for searches with no tag)
+        name = name.lower()
+        for member in self.main_guild.members:
+            if name == (member.nick or member.name)[:-7].lower():
+                return member
+
 
     def set_tfm_instance(self, tfm):
         self.tfm = tfm
