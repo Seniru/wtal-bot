@@ -65,7 +65,8 @@ async def inv(args, msg, client):
 
 @command(discord=True, aliases=["t"])
 async def tc(args, msg, client):
-    await client.tfm.sendTribeMessage(utils.normalize_msg_from_discord("[" + msg.author.nick + "] " + " ".join(args), client))
+    nick, tag = utils.extract_name_and_tag((utils.get_tfm_nick_format(msg.author.nick or msg.author.name) or (msg.author.nick or msg.author.name)))
+    await client.tfm.sendTribeMessage(utils.normalize_msg_from_discord("[" + nick + "] " + " ".join(args), client))
     #await client.tfm.sendTribeMessage("[" + msg.author.nick + "] " + " ".join(args))
 
 @command(discord=True, tfm=True)
