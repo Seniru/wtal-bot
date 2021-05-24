@@ -84,10 +84,15 @@ async def who(args, msg, client):
 
             name, tag = utils.extract_name_and_tag(utils.normalize_name(member.name))
 
-            fields[-1]["value"] += "• :{}: {}  [*`{}`*]\n".format(
-                ["transgender_symbol", "female_sign", "male_sign"][member.gender],
+            if member.room.startswith("*") or member.room.startswith("$") or member.room.startswith("@"):
+                commu, room = "xx", member.room[1:]
+            else:
+                commu, room = member.room[:2], member.room[3:]
+
+            fields[-1]["value"] += "• {} {}  [*`{}`*]\n".format(
+                ":united_nations:" if commu == "xx" else ":flag_{}:".format(({ "en": "gb", "ta": "lk" }).get(commu, commu)),
                 f"{name}`#{tag}`",
-                member.room.replace("*", r"\*")
+                room
             )
 
         await msg.channel.send(
