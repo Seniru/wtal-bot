@@ -66,9 +66,7 @@ async def restart(args, msg, client):
         return await msg.reply("You are not permitted to do this action!")
     import sys
     await msg.reply(":hourglass_flowing_sand: | Restarting...")
-    client.tfm.close()
-    await client.close()
-    sys.exit()
+    sys.exit("Restart")
 
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
