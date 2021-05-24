@@ -140,6 +140,7 @@ async def profile(args, msg, client):
     tribe = await client.tfm.getTribe(True)
     if len(args) == 0:
         target = tribe.get_member((utils.get_tfm_nick_format(msg.author.nick) or "").lower())
+        args.append(target.name if target else (msg.author.nick or msg.author.name))
     else:
         args[0] = args[0].lower()
         if len(msg.mentions) == 1:
