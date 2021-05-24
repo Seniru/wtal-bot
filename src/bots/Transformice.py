@@ -101,6 +101,12 @@ class Transformice(aiotfm.Client):
 		))
 		await self.update_member(name)
 
+	async def on_member_connected(self, name):
+		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {} just connected!")
+		await self.sendTribeMessage(f"Welcome back {name}!")
+
+	async def on_member_disconnected(self, name):
+		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {} has disconnected!")
 
 	async def on_whisper(self, message):
 		args = re.split(r"\s+", message.content)
