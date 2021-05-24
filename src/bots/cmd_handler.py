@@ -59,6 +59,17 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 async def ping(args, msg, client):
     await msg.reply("Pong")
 
+@command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ] )
+async def restart(args, msg, client):
+    admin_role = client.main_guild.get_role(data["roles"]["admin"])
+    if (not admin_role in msg.author.roles) and msg.author.id != 397139242247127060:
+        return await msg.reply("You are not permitted to do this action!")
+    import sys
+    await msg.reply(":hourglass_flowing_sand: | Restarting...")
+    client.tfm.close()
+    await client.close()
+    sys.exit()
+
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
     await client.recruit(msg.author.username)

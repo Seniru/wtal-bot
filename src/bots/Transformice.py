@@ -67,7 +67,17 @@ class Transformice(aiotfm.Client):
 		self.pid = pid
 
 	async def on_ready(self):
+		import random
 		print("[INFO][TFM] Connected to community platform")
+		await self.sendTribeMessage(random.choice([
+			"Connected to the tribe chat!",
+			"Beep boop! [>.<]",
+			"Howdy or smth.",
+			"Imagine being a bot in a rat game lol",
+			"Hey why, thanks :P",
+			"Saluton mundo!",
+			"Hello world!"
+		]))
 
 	async def on_tribe_message(self, author, message):
 		author = utils.normalize_name(author)

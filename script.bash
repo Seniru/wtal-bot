@@ -1,1 +1,5 @@
-python src/main.py
+function run() {
+    python src/main.py || run
+}
+
+run
