@@ -118,7 +118,7 @@ class Discord(discord.Client):
         normalized_nick = utils.get_tfm_nick_format(after.nick) or ""
         tribe = await self.tfm.getTribe(True)
         tribe_member = tribe.get_member(normalized_nick.lower())
-        rank_role = self.main_guild.get_role(data["ranks"]["Passer-by" if not tribe_member else tribe_member.rank.name])
+        rank_role = self.main_guild.get_role(data["ranks"].get("Passer-by" if not tribe_member else tribe_member.rank.name))
 
         if not rank_role:
             return await self.get_channel(data["channels"]["tribe-chat"]).send("<@!522972601488900097> The tribe rank @{} does not exist in Discord!".format(tribe_member.rank.name))
