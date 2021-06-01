@@ -1,5 +1,5 @@
 function run() {
-    luvit ./src/bot.lua || run
+    python src/main.py || run
 }
 
 run
