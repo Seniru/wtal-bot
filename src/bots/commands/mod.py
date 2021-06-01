@@ -26,7 +26,7 @@ async def whitelist(args, msg, client):
 
 async def warnings(args, msg, client):
     if client.client_type == "Discord":
-        if len(args) != 0 or (warns := client.mod_data["warnings"].get(args[0])):
+        if len(args) != 0 and (warns := client.mod_data["warnings"].get(args[0])):
             return await msg.reply(embed = Embed.from_dict({
                 "title": "Warnings of {}".format(args[0]),
                 "description": "• " + "\n• ".join(warns),
