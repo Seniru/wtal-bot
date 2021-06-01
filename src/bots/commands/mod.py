@@ -35,12 +35,12 @@ async def warnings(args, msg, client):
                     "text": "Total warnings: {}".format(len(warns))
                 }
             }))
-        msg.reply(":angel: | No warnings for {}".format(args[0]))
+        await msg.reply(":angel: | No warnings for {}".format(args[0]))
 
 async def kick(args, msg, client):
 
     if len(args) < 1:
-        return msg.reply(":x: | Invalid syntax (`> kick [target]`)")
+        return await msg.reply(":x: | Invalid syntax (`> kick [target]`)")
 
     from aiotfm import Packet
 
