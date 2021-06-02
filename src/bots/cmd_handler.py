@@ -4,6 +4,7 @@ import re
 import requests
 import asyncio
 import json
+import urllib
 
 from bots import translations
 
@@ -272,7 +273,4 @@ async def profile(args, msg, client):
                     tfm_profile.stats.divineModeSaves
                 )}
             ]
-
-            embed["thumbnail"] = { "url": "https://cheese.formice.com/api/dressroom/mouse/{}".format(tfm_profile.look) }
-
         await msg.reply(embed = Embed.from_dict(embed))
