@@ -273,6 +273,6 @@ async def profile(args, msg, client):
                 )}
             ]
 
-            embed["image"] = { "url": "http://santanl.000webhostapp.com/badges.php?row_max=18&badges={}".format(",".join([str(x) for x in tfm_profile.badges.keys()])) }
+            embed["thumbnail"] = { "url": "https://cheese.formice.com/api/dressroom/mouse/{}".format(tfm_profile.look) }
 
         await msg.reply(embed = Embed.from_dict(embed))
