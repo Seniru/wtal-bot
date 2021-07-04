@@ -44,6 +44,10 @@ class Discord(discord.Client):
 
 
     async def on_message(self, message):
+
+        if (str(message.channel.id) == os.getenv("GRAVEYARD")) and (self.main_guild.get_role(data["roles"]["mafia_dead"]) in message.author.roles):
+            await self.get_channel(int(os.getenv("MEDIUM_CHAT"))).send(":speaking_head: **[**<@{}>**]** `{}`".format(message.author.id, message.content))
+
         if message.content.startswith(">"):
             content = re.match(r"^>\s*(.+)", message.content).group(1)
             args = re.split(r"\s+", content)
