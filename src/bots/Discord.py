@@ -4,6 +4,8 @@ import os
 import utils
 import json
 import requests
+import asyncio
+from datetime import datetime, timedelta
 
 from data import data
 from bots.cmd_handler import commands
@@ -37,6 +39,9 @@ class Discord(discord.Client):
 
         self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
         self.mod_data = json.loads(self.mod_data.content[7:-3])
+
+        await self.start_period_tasks()
+
 
     async def on_message(self, message):
         if message.content.startswith(">"):
@@ -162,6 +167,19 @@ class Discord(discord.Client):
         {}
         ```
         """.format(json.dumps(self.mod_data)))
+
+    async def start_period_tasks(self):
+        print("[INFO] Checking for periodic tasks...")
+        # check qotd
+        await commands["qotd"]["f"](["ask"], None, self)
+        # other daily tasks
+        last_daily_data = await self.data_channel.fetch_message(data["data"]["daily"])
+        now = datetime.now()
+        if now > datetime.fromtimestamp(float(last_daily_data.content)) + timedelta(days=1):
+            await commands["bday"]["f"]([], None, self)
+            await last_daily_data.edit(content=now.timestamp())
+        await asyncio.sleep(1 * 60 * 5)
+        await self.start_period_tasks()
 
     def search_member(self, name, deep_check=False):
         if member := self.main_guild.get_member_named(utils.get_discord_nick_format(name)):

@@ -5,6 +5,7 @@ import requests
 import asyncio
 import json
 import urllib
+from datetime import datetime
 
 from bots import translations
 
@@ -274,3 +275,23 @@ async def profile(args, msg, client):
                 )}
             ]
         await msg.reply(embed = Embed.from_dict(embed))
+
+@command(discord=True)
+async def bday(args, msg, client):
+    channel = client.main_guild.get_channel(data["channels"]["bday"])
+    raw_data = ""
+    for msg_id in data["data"]["bday"]:
+        message = await channel.fetch_message(msg_id)
+        raw_data += message.content
+    raw_data = re.sub("`", "", raw_data)[20:-86]
+    today = datetime.now().strftime("%-d %B")
+    bdays = re.findall("{} - (.+)\n".format(today), raw_data)
+    if msg is None and len(args) == 0: return
+    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["admin"]).send
+    await method(embed = Embed.from_dict({
+        "title": "Today's birthdays :tada:",
+        "color": 0xccdd33,
+        "description": "No birthdays today ;c" if len(bdays) == 0 else "• {}".format("\n• ".join(bdays)),
+        "timestamp": datetime.now().isoformat()
+    }))
+        
