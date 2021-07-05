@@ -5,6 +5,7 @@ import utils
 import json
 import requests
 import asyncio
+import random
 from datetime import datetime, timedelta
 
 from data import data
@@ -44,7 +45,8 @@ class Discord(discord.Client):
 
 
     async def on_message(self, message):
-
+        
+        # temporary code
         if (str(message.channel.id) == os.getenv("GRAVEYARD")) and (self.main_guild.get_role(data["roles"]["mafia_dead"]) in message.author.roles):
             await self.get_channel(int(os.getenv("MEDIUM_CHAT"))).send(":speaking_head: **[**<@{}>**]** `{}`".format(message.author.id, message.content))
 
@@ -98,6 +100,18 @@ class Discord(discord.Client):
                     return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
 
                 await message.reply(embed = discord.Embed.from_dict(res))
+
+        elif self.user in message.mentions:
+            fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).text
+            await message.reply(embed = discord.Embed.from_dict({
+                "title": "{}! Wanna hear a fact? :bulb:".format(random.choice([
+                    "Hi", "Hello", "Howdy", "Hola", "Yo", "Wassup", "Hola", "Namasthe", "Hi there", "Greetings",
+                    "What's going on", "How's everything", "Good to see you", "Great to see you", "Nice to see you",
+                    "Saluton", "What's new", "How are you feeling today","Hey there"
+                ])),
+                "description": fact,
+                "color": 0x2987ba
+            }))
 
     async def on_member_join(self, member):
         error = False
