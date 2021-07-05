@@ -282,6 +282,10 @@ async def profile(args, msg, client):
                     tfm_profile.stats.divineModeSaves
                 )}
             ]
+        roles = json.loads(requests.get(f"https://cheese.formice.com/api/players/{fName}-{disc}").text)["tfm_roles"]
+        embed["color"] = ({ 
+            "admin": 0xEB1D51, "mod": 0xBABD2F, "sentinel": 0x2ECF73, "mapcrew": 0x2F7FCC, "module": 0x95D9D6, "funcorp": 0xF89F4B
+        }).get(roles[0] if roles else ("admin" if disc == "0001" else 0), 0x009D9D)
         await msg.reply(embed = Embed.from_dict(embed))
 
 @command(discord=True)
