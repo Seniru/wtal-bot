@@ -101,7 +101,7 @@ class Discord(discord.Client):
 
                 await message.reply(embed = discord.Embed.from_dict(res))
 
-        elif self.user in message.mentions:
+        elif self.user.id in message.raw_mentions:
             fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).text
             await message.reply(embed = discord.Embed.from_dict({
                 "title": "{}! Wanna hear a fact? :bulb:".format(random.choice([
