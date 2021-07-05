@@ -69,6 +69,15 @@ async def restart(args, msg, client):
     await msg.reply(":hourglass_flowing_sand: | Restarting...")
     sys.exit("Restart")
 
+@command(discord=True, allowed_roles = [data["roles"]["admin"]] )
+async def room(args, msg, client):
+    try:
+        await client.tfm.joinRoom(" ".join(args))
+        room = await client.tfm.wait_for("on_joined_room", timeout=4)
+        await msg.reply(":white_check_mark: | Joined the room (name: `{}` | community: `{}`)".format(room.name, room.community))
+    except Exception as e:
+        await msg.reply(f":x: | {e}")
+
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
     await client.recruit(msg.author.username)
