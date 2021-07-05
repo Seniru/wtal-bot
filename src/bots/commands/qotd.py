@@ -38,7 +38,7 @@ async def ask(args, msg, client):
     qotd_channel = client.get_channel(data["channels"]["qotd"])
     if force or cooldown_over:
         if len(client.questions["questions"]) > 0:
-            await qotd_channel.send(embed = Embed.from_dict({
+            await qotd_channel.send(content = "<@&742418187198660719>", embed = Embed.from_dict({
                 "title": "QOTD #{}".format(client.questions["index"]),
                 "description": client.questions["questions"].pop(0),
                 "color": 0x2987ba

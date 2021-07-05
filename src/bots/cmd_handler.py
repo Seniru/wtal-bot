@@ -4,7 +4,6 @@ import re
 import requests
 import asyncio
 import json
-import urllib
 from datetime import datetime
 
 from bots import translations
@@ -294,4 +293,32 @@ async def bday(args, msg, client):
         "description": "No birthdays today ;c" if len(bdays) == 0 else "• {}".format("\n• ".join(bdays)),
         "timestamp": datetime.now().isoformat()
     }))
+
+@command(discord=True)
+async def stats(args, msg, client):
+    res = json.loads(requests.get("https://cheese.formice.com/api/tribes/A%20Place%20to%20Call%20Home").text)
+    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["stats"]).send
+    await method(content = 
+    """:calendar_spiral: **Daily tribe stats `[{}]` <:tribehouse:689470787950084154> **\n> ┗ :medal: **Position:** `{}`
+    > 
+    > :person_running: **Rounds: **      `{}`
+    > <:cheese:691158951563362314> **Cheese:**       `{}`
+    > <:p7:836550194380275742> **Firsts:**          `{}`
+    > <:bootcamp:836550195683917834> **Bootcamp:** `{}`
+    > 
+    > <:shaman:836550192387850251> **Gathered cheese/Normal/Hard/Divine: [** `{}`/`{}`/`{}`/`{}` **]**
+    """.format(
+        datetime.now().strftime("%d/%m/%y"),
+        res["position"],
+        res["stats"]["normal"]["rounds"],
+        res["stats"]["normal"]["cheese"],
+        res["stats"]["normal"]["first"],
+        res["stats"]["normal"]["bootcamp"],
+        res["stats"]["shaman"]["cheese"],
+        res["stats"]["shaman"]["saves_normal"],
+        res["stats"]["shaman"]["saves_hard"],
+        res["stats"]["shaman"]["saves_divine"]
+    ))
+    
+
         

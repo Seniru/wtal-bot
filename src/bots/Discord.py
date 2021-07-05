@@ -180,7 +180,11 @@ class Discord(discord.Client):
         last_daily_data = await self.data_channel.fetch_message(data["data"]["daily"])
         now = datetime.now()
         if now > datetime.fromtimestamp(float(last_daily_data.content)) + timedelta(days=1):
-            await commands["bday"]["f"]([], None, self)
+            for task in (("bday", []), ("stats", [])):
+                try:
+                    await commands[task[0]]["f"](task[1], None, self)
+                except Exception:
+                    pass
             await last_daily_data.edit(content=now.timestamp())
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()
