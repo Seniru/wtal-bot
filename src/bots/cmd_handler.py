@@ -1,16 +1,16 @@
-import functools
-import utils
-import re
-import requests
 import asyncio
+import functools
 import json
+import re
 from datetime import datetime
 
-from bots import translations
-
+import requests
+import utils
+from aiotfm import Packet
 from data import data
 from discord import Embed
 
+from bots import translations
 
 commands = {}
 
@@ -40,6 +40,7 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["cmder"] ])(ccmds.dcmd)
 
 from .commands import qotd as qhandler
+
 
 @command(discord = True, allowed_roles = [ data["roles"]["admin"] ])
 async def qotd(args, msg, client):
@@ -77,6 +78,15 @@ async def room(args, msg, client):
         await msg.reply(":white_check_mark: | Joined the room (name: `{}` | community: `{}`)".format(room.name, room.community))
     except Exception as e:
         await msg.reply(f":x: | {e}")
+
+@command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["event"] ])
+async def setmsg(args, msg, client):
+    try:
+        await client.tfm.sendCP(98, Packet().writeUTF(" ".join(args)))
+        await client.tfm.wait_for("on_raw_cp", lambda tc, packet: tc == 125, 2)
+        await msg.reply(":white_check_mark: | Changed the message!")
+    except Exception as e:
+        await msg.reply(f":x: | Failed to change the message (Error: `{e}`)")
 
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):

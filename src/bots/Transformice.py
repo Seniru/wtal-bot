@@ -1,14 +1,15 @@
-import aiotfm
 import asyncio
 import json
 import os
 import re
 
+import aiotfm
 import data
 import utils
 
 from bots.cmd_handler import commands
 from bots.commands.mod import kick
+
 
 class Transformice(aiotfm.Client):
 	def __init__(self, name, password, loop, discord, community=0):
@@ -61,7 +62,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_login_ready(self, online_players, community, country):
 		print(f"[INFO][TFM] Login Ready [{community}-{country}]")
-		await self.login(self.name, self.password, encrypted=False, room="*#castle")
+		await self.login(self.name, self.password, encrypted=False, room="*#bolodefchoco")
 
 	async def on_logged(self, player_id, username, played_time, community, pid):
 		self.pid = pid
@@ -74,7 +75,6 @@ class Transformice(aiotfm.Client):
 			"Beep boop! [>.<]",
 			"Howdy or smth.",
 			"Imagine being a bot in a rat game lol",
-			"Hey why, thanks :P",
 			"Saluton mundo!",
 			"Hello world!"
 		]))
@@ -93,7 +93,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_tribe_new_member(self, name):
 		name = utils.normalize_name(name)
-		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} just joined the tribe!.".format(utils.normalize_name(name)))
+		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} just joined the tribe!".format(utils.normalize_name(name)))
 		if self.discord.mod_data["blacklist"].get(name):
 			await kick([name], None, self.discord) # passing self.discord is just a hacky approach here
 			return await self.sendTribeMessage(f"{name} is in the blacklist, please do not invite them again!")

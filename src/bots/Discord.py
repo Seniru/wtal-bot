@@ -1,14 +1,15 @@
-import re
-import discord
-import os
-import utils
-import json
-import requests
 import asyncio
+import json
+import os
 import random
+import re
 from datetime import datetime, timedelta
 
+import discord
+import requests
+import utils
 from data import data
+
 from bots.cmd_handler import commands
 
 WANDBOX_ENDPOINT = "https://wandbox.org/api"
@@ -51,7 +52,7 @@ class Discord(discord.Client):
             await self.get_channel(int(os.getenv("MEDIUM_CHAT"))).send(":speaking_head: **[**<@{}>**]** `{}`".format(message.author.id, message.content))
 
         if message.content.startswith(">"):
-            content = re.match(r"^>\s*(.+)", message.content).group(1)
+            content = re.match(r"^>\s*((.|\n)*)", message.content).group(1)
             args = re.split(r"\s+", content)
 
             if args[0] in commands and commands[args[0]]["discord"]:
