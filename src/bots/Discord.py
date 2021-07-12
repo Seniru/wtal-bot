@@ -198,8 +198,10 @@ class Discord(discord.Client):
             for task in (("bday", []), ("stats", [])):
                 try:
                     await commands[task[0]]["f"](task[1], None, self)
-                except Exception:
-                    pass
+                except Exception as e:
+                    await self.main_guild.get_channel(data["data"]["channels"]["admin"]).send(
+                        "<@!522972601488900097> [DAILY TASK FAILURE|{}] `{}`\n```\n{}```"
+                        .format(task[0], e, e.with_traceback()))
             await last_daily_data.edit(content=now.timestamp())
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()
