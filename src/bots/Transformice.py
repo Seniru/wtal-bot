@@ -78,6 +78,7 @@ class Transformice(aiotfm.Client):
 			"Saluton mundo!",
 			"Hello world!"
 		]))
+		await self.discord.set_status()
 
 	async def on_tribe_message(self, author, message):
 		author = utils.normalize_name(author)
@@ -99,10 +100,12 @@ class Transformice(aiotfm.Client):
 			return await self.sendTribeMessage(f"{name} is in the blacklist, please do not invite them again!")
 		await self.sendTribeMessage(f"Welcome to 'A place to call home' {name}!")
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_tribe_member_left(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has left the tribe ;c".format(utils.normalize_name(name)))
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_tribe_member_kicked(self, name, kicker):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has kicked {} out of the tribe!".format(
@@ -110,13 +113,16 @@ class Transformice(aiotfm.Client):
 			utils.normalize_name(name)
 		))
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_member_connected(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {utils.normalize_name(name)} just connected!")
 		await self.sendTribeMessage(f"Welcome back {utils.normalize_name(name)}!")
+		await self.discord.set_status()
 
 	async def on_member_disconnected(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {utils.normalize_name(name)} has disconnected!")
+		await self.discord.set_status()
 
 	async def on_whisper(self, message):
 		args = re.split(r"\s+", message.content)

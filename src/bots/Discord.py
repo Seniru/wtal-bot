@@ -30,6 +30,7 @@ class Discord(discord.Client):
         
     async def on_ready(self):
         print("[INFO][DISCORD] Client is ready!")
+        await asyncio.sleep(3)
         self.main_guild = self.get_guild(data["guild"])
         self.data_channel = self.get_guild(data["data_guild"]).get_channel(data["channels"]["data"])
 
@@ -43,7 +44,6 @@ class Discord(discord.Client):
         self.mod_data = json.loads(self.mod_data.content[7:-3])
 
         await self.start_period_tasks()
-
 
     async def on_message(self, message):
         
@@ -205,6 +205,14 @@ class Discord(discord.Client):
             await last_daily_data.edit(content=now.timestamp())
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()
+
+    async def set_status(self):
+        tribe_total = await self.tfm.getTribe(True)
+        tribe_online = await self.tfm.getTribe(False)
+        await self.change_presence(
+            status=discord.Status.online,
+            activity=discord.Activity(type = discord.ActivityType.playing, name = "{} / {} online!".format(len(tribe_online.members), len(tribe_total.members)))
+        )
 
     def search_member(self, name, deep_check=False):
         if member := self.main_guild.get_member_named(utils.get_discord_nick_format(name)):
