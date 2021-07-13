@@ -55,6 +55,8 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.blacklist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.whitelist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warnings)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warn)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.rwarn)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.nick)
 
 @command(discord=True)

@@ -24,6 +24,36 @@ async def whitelist(args, msg, client):
         return await msg.reply(":angel: | Whitelisted {}".format(args[0]))
     await msg.reply(":x: | `\"{}\"` is not in the blacklist".format(args[0]))
 
+async def warn(args, msg, client):
+    if not len(args) >= 2:
+        return await msg.reply(":x: | Invalid syntax (`>warn <member> <reason>`)")
+    warned = args[0] # no checks because I think mods are intelligent
+    reason = " ".join(args[1:])
+    await client.tfm.whisper(warned, f"You have been warned in your tribe \"A Place to Call Home\"!\nReason: {reason}", True)
+    if not client.mod_data["warnings"].get(warned):
+        client.mod_data["warnings"][warned] = []
+    client.mod_data["warnings"][warned].append(reason)
+    await client.update_mod_data()
+    await msg.reply(f":white_check_mark: | Warned {warned}!")
+
+async def rwarn(args, msg, client):
+    if not len(args) >= 2 and not int(args[1]):
+        return await msg.reply(":x: | Invalid syntax (`>rwarn <member> <index>`)")
+    target = args[0]
+    index = int(args[1])
+    index -= 1
+    warnings =  client.mod_data["warnings"].get(target)
+    if not warnings:
+        return await msg.reply(":x: | No warnings for this member to remove.")
+    if index > len(warnings) or index < 0:
+        return await msg.reply(":x: | Invalid index")
+    warnings.pop(index)
+    if len(warnings) == 0:
+        client.mod_data["warnings"].pop(target)
+    await client.update_mod_data()
+    await msg.reply(":white_check_mark: | Removed a warning.")
+
+
 async def warnings(args, msg, client):
     if client.client_type == "Discord":
         if len(args) != 0 and (warns := client.mod_data["warnings"].get(args[0])):
