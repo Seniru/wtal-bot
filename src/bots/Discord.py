@@ -6,9 +6,11 @@ import re
 from datetime import datetime, timedelta
 
 import discord
+import discordslashcommands as slash
 import requests
 import utils
 from data import data
+from discord_components import Button, DiscordComponents, Select, SelectOption
 
 from bots.cmd_handler import commands
 
@@ -42,6 +44,9 @@ class Discord(discord.Client):
 
         self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
         self.mod_data = json.loads(self.mod_data.content[7:-3])
+
+        self.slash = slash.Manager(self)
+        DiscordComponents(self)
 
         await self.start_period_tasks()
 
@@ -113,6 +118,35 @@ class Discord(discord.Client):
                 "description": fact,
                 "color": 0x2987ba
             }))
+
+    async def on_interaction(self, member, interaction):
+        await interaction.end(content = "** **")
+        cmd_name = interaction.command.name
+        if cmd_name in commands and commands[cmd_name]["discord"]:
+            cmd = commands[cmd_name]
+            interaction.author = self.main_guild.get_member(interaction._member_data["user"]["id"])
+            interaction.member = interaction.author
+            if cmd["allowed_roles"]:
+                for role in cmd["allowed_roles"]:
+                    if self.main_guild.get_role(role) in interaction.member.roles:
+                        break
+                else:
+                    return await interaction.channel.send(embed = discord.Embed.from_dict({
+                        "title": ":x: Missing permissions",
+                        "description": "You need 1 of the following roles to use this command: \n{}".format(
+                            ", ".join(list(map(lambda role: "<@&{}>".format(role), cmd["allowed_roles"])))
+                        ),
+                        "color": 0xcc0000
+                    }))
+            interaction.reply = self.main_guild.get_channel(interaction.channel.id).send
+            interaction.send = self.main_guild.get_channel(interaction.channel.id).send
+            interaction.options = list(map(lambda o: o.value, interaction.command.options))
+            interaction.mentions = list(
+                map(
+                    lambda m: self.main_guild.get_member(int(re.match(r".*?(\d+).*", m)[1])),
+                    filter(lambda o: re.match(r"^<@!?(\d+)>$", o), interaction.options)
+                ))
+            await cmd["f"](interaction.options, interaction, self)
 
     async def on_member_join(self, member):
         error = False

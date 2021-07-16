@@ -1,0 +1,3 @@
+[submodule "discordslashcommands"]
+	path = discordslashcommands
+	url = https://github.com/mactul/discordslashcommands

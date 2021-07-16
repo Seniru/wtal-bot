@@ -329,7 +329,7 @@ async def stats(args, msg, client):
     > :person_running: **Rounds: **      `{}`
     > <:cheese:691158951563362314> **Cheese:**       `{}`
     > <:p7:836550194380275742> **Firsts:**          `{}`
-    > <:bootcamp:836550195683917834> **Bootcamp:** `{}`
+    > <:bootcamp:836550195683917834> **Bootcamp:**  `{}`
     > 
     > <:shaman:836550192387850251> **Gathered cheese/Normal/Hard/Divine: [** `{}`/`{}`/`{}`/`{}` **]**
     """.format(
@@ -345,5 +345,14 @@ async def stats(args, msg, client):
         res["stats"]["shaman"]["saves_divine"]
     ))
     
+@command(discord=True)
+async def test(args, msg, client):
+    from discord_components import DiscordComponents, Button, Select, SelectOption
 
-        
+    await msg.reply(content="Hello", components=[Button(label="hello")])
+    interaction = await client.wait_for("button_click")
+    print(interaction)
+    #await interaction.
+    await interaction.respond(content="ur mom")
+
+
