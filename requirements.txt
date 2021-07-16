@@ -7,3 +7,4 @@ multidict==5.1.0
 w3lib==1.22.0
 yarl==1.6.3
 requests
+-e discordslashcommands
