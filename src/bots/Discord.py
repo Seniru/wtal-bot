@@ -45,7 +45,7 @@ class Discord(discord.Client):
         self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
         self.mod_data = json.loads(self.mod_data.content[7:-3])
 
-        self.slash = slash.Manager(self)
+        self.slash = {}#slash.Manager(self)
         DiscordComponents(self)
 
         await self.start_period_tasks()
