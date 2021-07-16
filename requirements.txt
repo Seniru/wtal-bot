@@ -1,7 +1,7 @@
 aiohttp==3.7.4.post0
 aiotfm==1.4.0rc0
 async-timeout==3.0.1
-discord-py-slash-command==1.1.2
+discord-components==1.1.4
 discord.py==1.7.1
 multidict==5.1.0
 w3lib==1.22.0
