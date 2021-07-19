@@ -130,7 +130,7 @@ class Transformice(aiotfm.Client):
 			await commands[args[0]]["f"](args[1:], message, self)
 
 	async def on_error(self, evt, e, *args, **kwargs):
-		await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> [ERR][TFM@evt{evt}] {e}")
+        await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][TFM@evt_{evt}]` ```py\n{e}```")
 
 
 	async def update_member(self, target):

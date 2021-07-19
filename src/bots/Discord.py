@@ -193,7 +193,8 @@ class Discord(discord.Client):
 
     async def on_error(self, evt, *args, **kwargs):
         import sys
-        await self.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> [ERR][DISCORD@evt{evt}] {sys.exc_info()}")
+        exe_type, val, traceback = sys.exc_info()
+        await self.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][DISCORD@evt_{evt}]` ```py\n{exe_type.__name__}@{traceback.tb_frame.f_code.co_filename}-{traceback.tb_lineno}: {val}```")
 
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)
@@ -240,7 +241,7 @@ class Discord(discord.Client):
                     await self.main_guild.get_channel(data["data"]["channels"]["admin"]).send(
                         "<@!522972601488900097> [DAILY TASK FAILURE|{}] `{}`\n```\n{}```"
                         .format(task[0], e, e.with_traceback()))
-            await last_daily_data.edit(content=now.timestamp())
+            await last_daily_data.edit(content=str(now.timestamp()))
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()
 
