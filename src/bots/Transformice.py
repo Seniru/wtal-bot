@@ -129,6 +129,10 @@ class Transformice(aiotfm.Client):
 		if (not message.sent) and args[0] in commands and commands[args[0]]["tfm"] and commands[args[0]]["whisper_command"]:
 			await commands[args[0]]["f"](args[1:], message, self)
 
+	async def on_error(self, evt, e, *args, **kwargs):
+		await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> [ERR][TFM@evt{evt}] {e}")
+
+
 	async def update_member(self, target):
 		discord_nick = utils.get_discord_nick_format(utils.normalize_name(target))
 		member = self.discord.main_guild.get_member_named(discord_nick)

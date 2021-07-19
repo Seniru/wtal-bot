@@ -191,6 +191,10 @@ class Discord(discord.Client):
 
         await after.add_roles(rank_role)
 
+    async def on_error(self, evt, *args, **kwargs):
+        import sys
+        await self.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> [ERR][DISCORD@evt{evt}] {sys.exc_info()}")
+
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)
         await member.send(f"Here's your verification key! `{key}\n`Whisper the following to Wtal#5272 (`/c Wtal#5272`) to get verified\n")
