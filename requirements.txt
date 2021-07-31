@@ -1,5 +1,5 @@
 aiohttp==3.7.4.post0
-aiotfm==1.4.0rc0
+aiotfm>=1.4.2
 async-timeout==3.0.1
 discord-components==1.1.4
 discord.py==1.7.1
