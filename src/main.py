@@ -1,7 +1,9 @@
 import os
+#import sys
 import asyncio
 
 from bots.Transformice import Transformice
+#sys.path.append("discordslashcommands")
 from bots.Discord import Discord
 
 loop = asyncio.get_event_loop()

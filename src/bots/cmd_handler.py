@@ -1,15 +1,16 @@
-import functools
-import utils
-import re
-import requests
 import asyncio
+import functools
 import json
+import re
+from datetime import datetime
 
-from bots import translations
-
+import requests
+import utils
+from aiotfm import Packet
 from data import data
 from discord import Embed
 
+from bots import translations
 
 commands = {}
 
@@ -40,6 +41,7 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 
 from .commands import qotd as qhandler
 
+
 @command(discord = True, allowed_roles = [ data["roles"]["admin"] ])
 async def qotd(args, msg, client):
     if len(args) > 0:
@@ -53,6 +55,8 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.blacklist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.whitelist)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warnings)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.warn)
+command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.rwarn)
 command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])(mod.nick)
 
 @command(discord=True)
@@ -67,6 +71,24 @@ async def restart(args, msg, client):
     import sys
     await msg.reply(":hourglass_flowing_sand: | Restarting...")
     sys.exit("Restart")
+
+@command(discord=True, allowed_roles = [data["roles"]["admin"]] )
+async def room(args, msg, client):
+    try:
+        await client.tfm.joinRoom(" ".join(args))
+        room = await client.tfm.wait_for("on_joined_room", timeout=4)
+        await msg.reply(":white_check_mark: | Joined the room (name: `{}` | community: `{}`)".format(room.name, room.community))
+    except Exception as e:
+        await msg.reply(f":x: | {e}")
+
+@command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["event"] ])
+async def setmsg(args, msg, client):
+    try:
+        await client.tfm.sendCP(98, Packet().writeUTF(" ".join(args)))
+        await client.tfm.wait_for("on_raw_cp", lambda tc, packet: tc == 125, 2)
+        await msg.reply(":white_check_mark: | Changed the message!")
+    except Exception as e:
+        await msg.reply(f":x: | Failed to change the message (Error: `{e}`)")
 
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
@@ -272,7 +294,65 @@ async def profile(args, msg, client):
                     tfm_profile.stats.divineModeSaves
                 )}
             ]
-
-            embed["image"] = { "url": "http://santanl.000webhostapp.com/badges.php?row_max=18&badges={}".format(",".join([str(x) for x in tfm_profile.badges.keys()])) }
-
+        roles = json.loads(requests.get(f"https://cheese.formice.com/api/players/{fName}-{disc}").text)["tfm_roles"]
+        embed["color"] = ({ 
+            "admin": 0xEB1D51, "mod": 0xBABD2F, "sentinel": 0x2ECF73, "mapcrew": 0x2F7FCC, "module": 0x95D9D6, "funcorp": 0xF89F4B
+        }).get(roles[0] if roles else ("admin" if disc == "0001" else 0), 0x009D9D)
         await msg.reply(embed = Embed.from_dict(embed))
+
+@command(discord=True)
+async def bday(args, msg, client):
+    channel = client.main_guild.get_channel(data["channels"]["bday"])
+    raw_data = ""
+    for msg_id in data["data"]["bday"]:
+        message = await channel.fetch_message(msg_id)
+        raw_data += message.content
+    raw_data = re.sub("`", "", raw_data)[20:-86]
+    today = datetime.now().strftime("%-d %B")
+    bdays = re.findall("{} - (.+)\n".format(today), raw_data)
+    if msg is None and len(args) == 0: return
+    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["admin"]).send
+    await method(embed = Embed.from_dict({
+        "title": "Today's birthdays :tada:",
+        "color": 0xccdd33,
+        "description": "No birthdays today ;c" if len(bdays) == 0 else "• {}".format("\n• ".join(bdays)),
+        "timestamp": datetime.now().isoformat()
+    }))
+
+@command(discord=True)
+async def stats(args, msg, client):
+    res = json.loads(requests.get("https://cheese.formice.com/api/tribes/A%20Place%20to%20Call%20Home").text)
+    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["stats"]).send
+    await method(content = 
+    """:calendar_spiral: **Daily tribe stats `[{}]` <:tribehouse:689470787950084154> **\n> ┗ :medal: **Position:** `{}`
+    > 
+    > :person_running: **Rounds: **      `{}`
+    > <:cheese:691158951563362314> **Cheese:**       `{}`
+    > <:p7:836550194380275742> **Firsts:**          `{}`
+    > <:bootcamp:836550195683917834> **Bootcamp:**  `{}`
+    > 
+    > <:shaman:836550192387850251> **Gathered cheese/Normal/Hard/Divine: [** `{}`/`{}`/`{}`/`{}` **]**
+    """.format(
+        datetime.now().strftime("%d/%m/%y"),
+        res["position"],
+        res["stats"]["normal"]["rounds"],
+        res["stats"]["normal"]["cheese"],
+        res["stats"]["normal"]["first"],
+        res["stats"]["normal"]["bootcamp"],
+        res["stats"]["shaman"]["cheese"],
+        res["stats"]["shaman"]["saves_normal"],
+        res["stats"]["shaman"]["saves_hard"],
+        res["stats"]["shaman"]["saves_divine"]
+    ))
+    
+@command(discord=True)
+async def test(args, msg, client):
+    from discord_components import DiscordComponents, Button, Select, SelectOption
+
+    await msg.reply(content="Hello", components=[Button(label="hello")])
+    interaction = await client.wait_for("button_click")
+    print(interaction)
+    #await interaction.
+    await interaction.respond(content="ur mom")
+
+

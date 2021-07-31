@@ -1,14 +1,15 @@
-import aiotfm
 import asyncio
 import json
 import os
 import re
 
+import aiotfm
 import data
 import utils
 
 from bots.cmd_handler import commands
 from bots.commands.mod import kick
+
 
 class Transformice(aiotfm.Client):
 	def __init__(self, name, password, loop, discord, community=0):
@@ -61,7 +62,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_login_ready(self, online_players, community, country):
 		print(f"[INFO][TFM] Login Ready [{community}-{country}]")
-		await self.login(self.name, self.password, encrypted=False, room="*#castle")
+		await self.login(self.name, self.password, encrypted=False, room="*#bolodefchoco")
 
 	async def on_logged(self, player_id, username, played_time, community, pid):
 		self.pid = pid
@@ -74,10 +75,10 @@ class Transformice(aiotfm.Client):
 			"Beep boop! [>.<]",
 			"Howdy or smth.",
 			"Imagine being a bot in a rat game lol",
-			"Hey why, thanks :P",
 			"Saluton mundo!",
 			"Hello world!"
 		]))
+		await self.discord.set_status()
 
 	async def on_tribe_message(self, author, message):
 		author = utils.normalize_name(author)
@@ -93,16 +94,18 @@ class Transformice(aiotfm.Client):
 
 	async def on_tribe_new_member(self, name):
 		name = utils.normalize_name(name)
-		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} just joined the tribe!.".format(utils.normalize_name(name)))
+		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} just joined the tribe!".format(utils.normalize_name(name)))
 		if self.discord.mod_data["blacklist"].get(name):
 			await kick([name], None, self.discord) # passing self.discord is just a hacky approach here
 			return await self.sendTribeMessage(f"{name} is in the blacklist, please do not invite them again!")
 		await self.sendTribeMessage(f"Welcome to 'A place to call home' {name}!")
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_tribe_member_left(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has left the tribe ;c".format(utils.normalize_name(name)))
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_tribe_member_kicked(self, name, kicker):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send("> {} has kicked {} out of the tribe!".format(
@@ -110,18 +113,25 @@ class Transformice(aiotfm.Client):
 			utils.normalize_name(name)
 		))
 		await self.update_member(name)
+		await self.discord.set_status()
 
 	async def on_member_connected(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {utils.normalize_name(name)} just connected!")
 		await self.sendTribeMessage(f"Welcome back {utils.normalize_name(name)}!")
+		await self.discord.set_status()
 
 	async def on_member_disconnected(self, name):
 		await self.discord.get_channel(data.data["channels"]["tribe_chat"]).send(f"> {utils.normalize_name(name)} has disconnected!")
+		await self.discord.set_status()
 
 	async def on_whisper(self, message):
 		args = re.split(r"\s+", message.content)
 		if (not message.sent) and args[0] in commands and commands[args[0]]["tfm"] and commands[args[0]]["whisper_command"]:
 			await commands[args[0]]["f"](args[1:], message, self)
+
+	async def on_error(self, evt, e, *args, **kwargs):
+		await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][TFM@evt_{evt}]` ```py\n{e}```")
+
 
 	async def update_member(self, target):
 		discord_nick = utils.get_discord_nick_format(utils.normalize_name(target))
