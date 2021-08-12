@@ -38,11 +38,12 @@ async def ask(args, msg, client):
     qotd_channel = client.get_channel(data["channels"]["qotd"])
     if force or cooldown_over:
         if len(client.questions["questions"]) > 0:
-            await qotd_channel.send(content = "<@&742418187198660719>", embed = Embed.from_dict({
+            qn = await qotd_channel.send(content = "<@&742418187198660719>", embed = Embed.from_dict({
                 "title": "QOTD #{}".format(client.questions["index"]),
                 "description": client.questions["questions"].pop(0),
                 "color": 0x2987ba
             }))
+            client.start_public_thread("QOTD #{}".format(client.questions["index"]), qn.channel.id, qn.id)
             client.questions["index"] += 1
             client.questions["last-post"] = int(datetime.now().timestamp())
             await client.update_qotd()

@@ -15,6 +15,7 @@ from discord_components import Button, DiscordComponents, Select, SelectOption
 from bots.cmd_handler import commands
 
 WANDBOX_ENDPOINT = "https://wandbox.org/api"
+DISCORD_ENDPOINT = "https://discord.com/api/v9"
 
 intents = discord.Intents.default()
 intents.members = True
@@ -252,6 +253,15 @@ class Discord(discord.Client):
             status=discord.Status.online,
             activity=discord.Activity(type = discord.ActivityType.playing, name = "{} / {} online!".format(len(tribe_online.members), len(tribe_total.members)))
         )
+
+    async def start_public_thread(self, name, channel_id, message_id):
+        print(requests.post(DISCORD_ENDPOINT + f"/channels/{channel_id}/messages/{message_id}/threads",
+            json={
+                "name": name,
+                "auto_archive_duration": 60 * 24
+            }, headers={
+                "Authorization": "Bot " + os.getenv("DISCORD")
+        }).content)
 
     def search_member(self, name, deep_check=False):
         if member := self.main_guild.get_member_named(utils.get_discord_nick_format(name)):
