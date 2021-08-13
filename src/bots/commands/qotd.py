@@ -43,7 +43,7 @@ async def ask(args, msg, client):
                 "description": client.questions["questions"].pop(0),
                 "color": 0x2987ba
             }))
-            client.start_public_thread("QOTD #{}".format(client.questions["index"]), qn.channel.id, qn.id)
+            await client.start_public_thread("QOTD #{}".format(client.questions["index"]), qn.channel.id, qn.id)
             client.questions["index"] += 1
             client.questions["last-post"] = int(datetime.now().timestamp())
             await client.update_qotd()
