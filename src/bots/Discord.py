@@ -52,10 +52,6 @@ class Discord(discord.Client):
         await self.start_period_tasks()
 
     async def on_message(self, message):
-        
-        # temporary code
-        if (str(message.channel.id) == os.getenv("GRAVEYARD")) and (self.main_guild.get_role(data["roles"]["mafia_dead"]) in message.author.roles):
-            await self.get_channel(int(os.getenv("MEDIUM_CHAT"))).send(":speaking_head: **[**<@{}>**]** `{}`".format(message.author.id, message.content))
 
         if message.content.startswith(">"):
             content = re.match(r"^>\s*((.|\n)*)", message.content).group(1)
@@ -193,9 +189,8 @@ class Discord(discord.Client):
         await after.add_roles(rank_role)
 
     async def on_error(self, evt, *args, **kwargs):
-        import sys
-        exe_type, val, traceback = sys.exc_info()
-        await self.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][DISCORD@evt_{evt}]` ```py\n{exe_type.__name__}@{traceback.tb_frame.f_code.co_filename}-{traceback.tb_lineno}: {val}```")
+        import traceback
+        await self.get_channel(data["channels"]["staff"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
 
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)
@@ -239,9 +234,10 @@ class Discord(discord.Client):
                 try:
                     await commands[task[0]]["f"](task[1], None, self)
                 except Exception as e:
-                    await self.main_guild.get_channel(data["data"]["channels"]["admin"]).send(
-                        "<@!522972601488900097> [DAILY TASK FAILURE|{}] `{}`\n```\n{}```"
-                        .format(task[0], e, e.with_traceback()))
+                    import traceback
+                    await self.main_guild.get_channel(data["channels"]["staff"]).send(
+                        "**`[DAILY TASK FAILURE|{0}]`** \n```py\n{1}```"
+                        .format(task[0].upper(), traceback.format_exc()))
             await last_daily_data.edit(content=str(now.timestamp()))
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()

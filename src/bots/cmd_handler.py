@@ -66,8 +66,6 @@ async def ping(args, msg, client):
 @command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ] )
 async def restart(args, msg, client):
     admin_role = client.main_guild.get_role(data["roles"]["admin"])
-    if (not admin_role in msg.author.roles) and msg.author.id != 397139242247127060:
-        return await msg.reply("You are not permitted to do this action!")
     import sys
     await msg.reply(":hourglass_flowing_sand: | Restarting...")
     sys.exit("Restart")
@@ -311,7 +309,7 @@ async def bday(args, msg, client):
     today = datetime.now().strftime("%-d %B")
     bdays = re.findall("{} - (.+)\n".format(today), raw_data)
     if msg is None and len(args) == 0: return
-    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["admin"]).send
+    method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["staff"]).send
     await method(embed = Embed.from_dict({
         "title": "Today's birthdays :tada:",
         "color": 0xccdd33,
@@ -322,6 +320,7 @@ async def bday(args, msg, client):
 @command(discord=True)
 async def stats(args, msg, client):
     res = json.loads(requests.get("https://cheese.formice.com/api/tribes/A%20Place%20to%20Call%20Home").text)
+    position = json.loads(requests.get("https://cheese.formice.com/api/position/overall?value={}&entity=tribe".format(res["stats"]["score"]["overall"])).text)["position"]
     method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["stats"]).send
     await method(content = 
     """:calendar_spiral: **Daily tribe stats `[{}]` <:tribehouse:689470787950084154> **\n> ┗ :medal: **Position:** `{}`
@@ -334,7 +333,7 @@ async def stats(args, msg, client):
     > <:shaman:836550192387850251> **Gathered cheese/Normal/Hard/Divine: [** `{}`/`{}`/`{}`/`{}` **]**
     """.format(
         datetime.now().strftime("%d/%m/%y"),
-        res["position"],
+        position,
         res["stats"]["mouse"]["rounds"],
         res["stats"]["mouse"]["cheese"],
         res["stats"]["mouse"]["first"],
