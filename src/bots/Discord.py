@@ -171,7 +171,7 @@ class Discord(discord.Client):
 
         verified_role = self.main_guild.get_role(data["roles"]["verified"])
 
-        if not verified_role in after.roles:
+        if (not verified_role in after.roles) or after.bot:
             return
 
         normalized_nick = utils.get_tfm_nick_format(after.nick) or ""
