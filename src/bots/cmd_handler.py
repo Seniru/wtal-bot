@@ -65,9 +65,9 @@ async def ping(args, msg, client):
 
 @command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ] )
 async def restart(args, msg, client):
-    admin_role = client.main_guild.get_role(data["roles"]["admin"])
     import sys
-    await msg.reply(":hourglass_flowing_sand: | Restarting...")
+    if msg:
+        await msg.reply(":hourglass_flowing_sand: | Restarting...")
     sys.exit("Restart")
 
 @command(discord=True, allowed_roles = [data["roles"]["admin"]] )
@@ -308,7 +308,7 @@ async def bday(args, msg, client):
     raw_data = re.sub("`", "", raw_data)[20:-86]
     today = datetime.now().strftime("%-d %B")
     bdays = re.findall("{} - (.+)\n".format(today), raw_data)
-    if msg is None and len(args) == 0: return
+    if msg is None and len(bdays) == 0: return
     method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["staff"]).send
     await method(embed = Embed.from_dict({
         "title": "Today's birthdays :tada:",

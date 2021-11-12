@@ -26,8 +26,8 @@ def get_discord_nick_format(name):
 
 
 def get_tfm_nick_format(nick):
-    name, tag = nick[:-7], nick[-4:]
     try:
+        name, tag = nick[:-7], nick[-4:]
         # sorry again
         return "{}#{}{}{}{}".format(name, subscripts.index(tag[0]), subscripts.index(tag[1]), subscripts.index(tag[2]), subscripts.index(tag[3]))
     except Exception:

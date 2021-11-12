@@ -190,6 +190,18 @@ class Discord(discord.Client):
 
     async def on_error(self, evt, *args, **kwargs):
         import traceback
+        import sys
+        
+        e, r, tb = sys.exc_info()
+        
+        import struct
+        import aiotfm
+        ignore_list =  [ struct.error ]
+        if e in ignore_list: return
+        
+        if str(r) == "Cannot send a packet to a closed Connection.":
+            return await commands["restart"]["f"]([], None, self)
+
         await self.get_channel(data["channels"]["staff"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
 
     async def send_verification_key(self, member):
