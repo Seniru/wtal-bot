@@ -62,7 +62,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_login_ready(self, online_players, community, country):
 		print(f"[INFO][TFM] Login Ready [{community}-{country}]")
-		await self.login(self.name, self.password, encrypted=False, room="*#bolodefchoco")
+		await self.login(self.name, self.password, encrypted=False, room="*#castle")
 
 	async def on_logged(self, player_id, username, played_time, community, pid):
 		self.pid = pid
@@ -76,7 +76,8 @@ class Transformice(aiotfm.Client):
 			"Howdy or smth.",
 			"Imagine being a bot in a rat game lol",
 			"Saluton mundo!",
-			"Hello world!"
+			"Hello world!",
+			"ACT A FOOL!!!",
 		]))
 		await self.discord.set_status()
 
