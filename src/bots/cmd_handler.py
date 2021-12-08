@@ -42,7 +42,7 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 from .commands import qotd as qhandler
 
 
-@command(discord = True, allowed_roles = [ data["roles"]["admin"] ])
+@command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])
 async def qotd(args, msg, client):
     if len(args) > 0:
         if hasattr(qhandler, args[0]):
