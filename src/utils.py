@@ -64,13 +64,18 @@ def normalize_msg_from_tc(msg, discord):
         g = match.group()
         mention_type = match[2]
         if mention_type == "@":  # user mentions / naughty mentions
-            if member := discord.search_member(match[3], True):
-                return f"<@!{ member.id }>"
-            elif g in ("@here", "@everyone"):
+            if g in ("@here", "@everyone"):
                 return f"@|{ match[3] }"
+            else:
+                print("here" in match[3] or "everyone" in match[3])
+                if "here" in match[3] or "everyone" in match[3]:
+                    return f"@|{ match[3] }"
+                elif member := discord.search_member(match[3], True):
+                    return f"<@!{ member.id }>"
         elif mention_type == "<@&":  # role mentions (raw)
             if role := discord.main_guild.get_role(int(match[4])):
                 return f"@{ role.name }"
         return g
+
     return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
     
