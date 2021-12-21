@@ -90,7 +90,7 @@ async def setmsg(args, msg, client):
 
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
-    if not msg.author.username == "Finnick#0000":
+    if not msg.author.username == "Finnick#7866":
         await client.recruit(msg.author.username)
 
 @command(discord=True, aliases=["t"])
