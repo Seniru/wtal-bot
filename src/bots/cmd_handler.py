@@ -346,6 +346,43 @@ async def stats(args, msg, client):
     ))
     
 @command(discord=True)
+async def acnh(args, msg, client):
+    print(args)
+    if len(args) < 2:
+        return await msg.reply(":x: **|** Invalid format\nCorrect format: `> acnh <type> <item>`. `type` could be one of the following: \n<:rolepeppyrabbit:929048043611889684> villagers\n\n`item` is the thing you are looking for!")
+    if args[0] == "villagers":
+        res = requests.get(f"https://www.instafluff.tv/ACDB/Villagers/{ args[1] }.json")
+        if res.status_code == 200:
+            data = json.loads(res.text)
+            await msg.reply(embed = Embed.from_dict({
+                "title": f"Villager - { args[1] }",
+                "description": "{} {} {}\n\n{}\n\n*`\"{}\"`*".format(
+                    "♂️" if data["gender"] == "Male" else "♀️",
+                    ":capricorn: :aquarius: :pisces: :aries: :taurus: :gemini: :cancer: :leo: :virgo: :libra: :scorpius: :sagittarius:".split(" ")[int(utils.search(r"(\d+)/(\d+)", data["birthdate"])[1]) - 1],
+                    dict(zip([ "Education", "Fashion", "Fitness", "Music", "Nature", "Play"], ":books: :lipstick: :muscle: :musical_note: :leaves: :yo_yo:".split()))[data["hobby"]],
+                    data["description"],
+                    data["saying"],
+                ),
+                "fields": [
+                    { "name": "Species", "value": data["species"], "inline": True },
+                    { "name": "Personality", "value": data["personality"], "inline": True },
+                    { "name": ":birthday: Birthday", "value": data["birthday"], "inline": True },
+                    { "name": "Catchphrase", "value": data["catchPhrase"]["US-en"], "inline": True }
+                ],
+                "thumbnail": {
+                    "url": data["icon"]
+                },
+                "image": {
+                    "url": data["image"],
+                },
+                "url": f"https://animalcrossing.fandom.com/wiki/{ args[1] }",
+                "color": int(data["bubbleColor"][1:], 16)
+                
+            }))
+        else:
+            await msg.reply(":x: **|** Couldn't find the villager")
+
+@command(discord=True)
 async def test(args, msg, client):
     from discord_components import DiscordComponents, Button, Select, SelectOption
 
@@ -354,5 +391,4 @@ async def test(args, msg, client):
     print(interaction)
     #await interaction.
     await interaction.respond(content="ur mom")
-
 
