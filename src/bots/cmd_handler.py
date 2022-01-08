@@ -2,6 +2,7 @@ import asyncio
 import functools
 import json
 import re
+import math
 from datetime import datetime
 
 import requests
@@ -347,7 +348,6 @@ async def stats(args, msg, client):
     
 @command(discord=True)
 async def acnh(args, msg, client):
-    print(args)
     if len(args) < 2:
         return await msg.reply(":x: **|** Invalid format\nCorrect format: `> acnh <type> <item>`. `type` could be one of the following: \n<:rolepeppyrabbit:929048043611889684> villagers\n\n`item` is the thing you are looking for!")
     if args[0] == "villagers":
@@ -381,6 +381,62 @@ async def acnh(args, msg, client):
             }))
         else:
             await msg.reply(":x: **|** Couldn't find the villager")
+
+@command(discord=True)
+async def botw(args, msg, client):
+    
+    if len(args) == 0:
+        return await msg.reply(":x: **|** Please provide an entry")
+    res = requests.get("https://botw-compendium.herokuapp.com/api/v2/entry/{}".format("_".join(args)))
+    if not res.status_code == 200:
+        return await msg.reply(":x: **|** Couldn't find the entry in the Compendium (`{}`)".format("_".join(args)))
+    data = json.loads(res.text)["data"]
+
+    embed = {
+        "title": "{} - {}".format(data["category"], data["name"]).capitalize(),
+        "description": data["description"],
+        "fields": [
+            { "name": ":pushpin: Common locations", "value": "• " + "\n• ".join(data["common_locations"]) if data["common_locations"] else "N/A", "inline": True },
+        ],
+        "image": {
+            "url": data["image"]
+        },
+        "footer": {
+            "text": "{} • ID: {}".format(data["name"], data["id"])
+        }
+
+    }
+    
+    if data["category"] == "monsters":
+        embed["fields"].append({ "name": ":cut_of_meat: Drops", "value": ("• " + "\n• ".join(data["drops"])) if data["drops"] else "N/A", "inline": True})
+        embed["color"] = 0xed611d
+
+    elif data["category"] == "materials" or data["category"] == "creatures":
+        embed["title"] += " {} :heart: x {}".format({ 
+            "extra hearts": ":yellow_heart: :arrow_double_up:",
+            "extra stamina": ":battery: :arrow_double_up:",
+            "stamina recovery": ":battery:",
+            "cold resistance": ":snowflake:",
+            "shock resistance": ":zap:",
+            "speed up": ":athletic_shoe:",
+            "stealth up": ":ninja:",
+            "attack up": ":crossed_swords:",
+            "defense up": ":shield:"
+        }.get(data["cooking_effect"], ""), data["hearts_recovered"])
+        embed["color"] = 0x9bc133
+    
+    elif data["category"] == "equipment":
+        embed["title"] += " {} x {}".format(":crossed_swords:" if data["attack"] > data["defense"] else ":shield:", max(data["attack"], data["defense"]))
+        embed["color"] = 0x4eaac0
+
+    elif data["category"] == "treasure":
+        embed["fields"].append({ "name": ":gem: Drops", "value": ("• " + "\n• ".join(data["drops"])) if data["drops"] else "N/A", "inline": True })
+        embed["color"] = 0x262820
+        
+    else:
+        return await msg.reply(":x: **|** The category of the entry is not supported yet :smiling_face_with_tear: ")
+    await msg.reply(embed = Embed.from_dict(embed))
+
 
 @command(discord=True)
 async def test(args, msg, client):
