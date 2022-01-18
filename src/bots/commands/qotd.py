@@ -14,9 +14,13 @@ async def queue(args, msg, client):
     }))
 
 async def add(args, msg, client):
-if idx := int(args[0]):
-client.questions["questions"].insert(idx, " ".join(args[1:]))
-else: client.questions["questions"].append(" ".join(args)) await client.update_qotd() await msg.reply("Added the question!")
+    if idx := int(args[0]):
+        client.questions["questions"].insert(idx, " ".join(args[1:]))
+    else:   
+        client.questions["questions"].append(" ".join(args)) 
+        
+    await client.update_qotd()
+    await msg.reply("Added the question!")
 
 async def remove(args, msg, client):
     try:
