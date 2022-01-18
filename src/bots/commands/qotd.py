@@ -14,8 +14,8 @@ async def queue(args, msg, client):
     }))
 
 async def add(args, msg, client):
-    if idx := int(args[0]):
-        client.questions["questions"].insert(idx, " ".join(args[1:]))
+    if isnumeric(args[0]):
+        client.questions["questions"].insert(int(args[0]), " ".join(args[1:]))
     else:   
         client.questions["questions"].append(" ".join(args)) 
         
