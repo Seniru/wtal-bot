@@ -3,7 +3,7 @@ import functools
 import json
 import re
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 import utils
@@ -96,7 +96,8 @@ async def inv(args, msg, client):
 
 @command(discord=True, aliases=["t"])
 async def tc(args, msg, client):
-    nick, tag = utils.extract_name_and_tag((utils.get_tfm_nick_format(msg.author.nick or msg.author.name) or (msg.author.nick or msg.author.name)))
+    if len(args) == 0: return await msg.add_reaction("🤡")
+    nick, _ = utils.extract_name_and_tag((utils.get_tfm_nick_format(msg.author.nick or msg.author.name) or (msg.author.nick or msg.author.name)))
     await client.tfm.sendTribeMessage(utils.normalize_msg_from_discord("[" + nick + "] " + " ".join(args), client))
     #await client.tfm.sendTribeMessage("[" + msg.author.nick + "] " + " ".join(args))
 
@@ -307,15 +308,25 @@ async def bday(args, msg, client):
     for msg_id in data["data"]["bday"]:
         message = await channel.fetch_message(msg_id)
         raw_data += message.content
-    raw_data = re.sub("`", "", raw_data)[20:-86]
-    today = datetime.now().strftime("%-d %B")
-    bdays = re.findall("{} - (.+)\n".format(today), raw_data)
-    if msg is None and len(bdays) == 0: return
+        raw_data = re.sub("`", "", raw_data)[20:-86]
+    today = datetime.now()
+    yesterday = (today - timedelta(days=1)).strftime("%-d %B")
+    tomorrow = (today + timedelta(days=1)).strftime("%-d %B")
+    today = today.strftime("%-d %B")
+    bdaysToday = re.findall("\n{} - (.+)\n".format(today), raw_data)
+    bdaysYesterday = re.findall("\n{} - (.+)\n".format(yesterday), raw_data)
+    bdaysTomorrow = re.findall("\n{} - (.+)\n".format(tomorrow), raw_data)
+    bdayCount = len(bdaysToday) + len(bdaysYesterday) + len(bdaysTomorrow)
+    if msg is None and len(bdayCount) == 0: return
     method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["staff"]).send
     await method(embed = Embed.from_dict({
-        "title": "Today's birthdays :tada:",
+        "title": "Birthdays :tada:",
         "color": 0xccdd33,
-        "description": "No birthdays today ;c" if len(bdays) == 0 else "• {}".format("\n• ".join(bdays)),
+        "fields": [
+            { "name": "Yesterday", "value": "No birthday" if len(bdaysYesterday) == 0 else "• {}".format("\n• ".join(bdaysYesterday)) },
+            { "name": "Today", "value": "No birthday" if len(bdaysToday) == 0 else "• {}".format("\n• ".join(bdaysToday)) },
+            { "name": "Tomorrow", "value": "No birthday" if len(bdaysTomorrow) == 0 else "• {}".format("\n• ".join(bdaysTomorrow)) }
+        ],
         "timestamp": datetime.now().isoformat()
     }))
 
