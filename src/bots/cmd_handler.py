@@ -317,7 +317,7 @@ async def bday(args, msg, client):
     bdaysYesterday = re.findall("\n{} - (.+)\n".format(yesterday), raw_data)
     bdaysTomorrow = re.findall("\n{} - (.+)\n".format(tomorrow), raw_data)
     bdayCount = len(bdaysToday) + len(bdaysYesterday) + len(bdaysTomorrow)
-    if msg is None and len(bdayCount) == 0: return
+    if msg is None and bdayCount == 0: return
     method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["staff"]).send
     await method(embed = Embed.from_dict({
         "title": "Birthdays :tada:",
