@@ -425,7 +425,7 @@ async def acnh(args, msg, client):
                 embed["color"] = 0x9dffb0
 
             elif args[0] == "bugs":
-                embed["fields"].append({ "name": "Price (Flick)", "value": "<:bells:962313051309236224> {}".format(data["price-flick"]), "inline": True })
+                embed["fields"].append({ "name": "Price (Flick)", "value": "<:bells:962313051309236224> {}".format(data["price-flick"]), "inline": False })
                 embed["color"] = 0xc48d3f
             
             await msg.reply(embed = Embed.from_dict(embed))
