@@ -360,7 +360,7 @@ async def stats(args, msg, client):
 @command(discord=True)
 async def acnh(args, msg, client):
     if len(args) < 2:
-        return await msg.reply(":x: **|** Invalid format\nCorrect format: `> acnh <type> <item>`. `type` could be one of the following: \n<:rolepeppyrabbit:929048043611889684> villagers\n\n`item` is the thing you are looking for!")
+        return await msg.reply(":x: **|** Invalid format\nCorrect format: `> acnh <type> <item>`. `type` could be one of the following: \n<:rolepeppyrabbit:929048043611889684> villagers\n<:fish:960948399283249202> fish\n<:bug:961894768290443294> bugs\n<:deap_sea:961895000889770024> sea\n\n`item` is the thing you are looking for!")
     if args[0] == "villagers":
         res = requests.get(f"https://www.instafluff.tv/ACDB/Villagers/{ args[1] }.json")
         if res.status_code == 200:
@@ -392,6 +392,49 @@ async def acnh(args, msg, client):
             }))
         else:
             await msg.reply(":x: **|** Couldn't find the villager")
+    elif args[0] in ("fish", "sea", "bugs"):
+        target = ("_".join(args[1:])).lower()
+        print(args[0])
+        print(f"https://acnhapi.com/v1/{ args[0] }/{ target }")
+        res = requests.get(f"https://acnhapi.com/v1/{ args[0] }/{ target }")
+        if res.status_code == 200:
+            data = json.loads(res.text)
+            embed = {}
+            embed["title"] = "{}{} - {}".format(args[0][0].upper(), args[0][1:], " ".join(args[1:]))
+            embed["url"] = f"https://animalcrossing.fandom.com/wiki/{ target }"
+            embed["image"] = { "url": data["image_uri"] }
+            embed["thumbnail"] = { "url": data["icon_uri"] }
+            embed["description"] = "<:bells:962313051309236224> **{} bells**\n\n {}\n\n`\"{}\"`".format(data["price"], data["museum-phrase"], data["catch-phrase"])
+            embed["fields"] = []
+            
+            seasonilty = ""
+            for i in range(1, 13):
+                seasonilty += ":orange_square:" if i in data["availability"]["month-array-northern"] else ":black_large_square:"
+                if i % 4 == 0: seasonilty += "\n"
+
+            embed["fields"].append({ "name": "Seasonality (Northern)", "value": seasonilty, "inline": True })
+            embed["fields"].append({ "name": "Time", "value": "All day" if data["availability"]["isAllDay"] else data["availability"]["time"], "inline": True })
+
+            if args[0] == "fish":
+                embed["fields"].append({ "name": "Shadow", "value": data["shadow"], "inline": False })
+                embed["fields"].append({ "name": "Price (CJ)", "value": "<:bells:962313051309236224> {}".format(data["price-cj"]), "inline": True })
+                embed["color"] = 0x81f1f7
+            elif args[0] == "sea":
+                embed["fields"].append({ "name": "Shadow", "value": data["shadow"], "inline": False })
+                embed["fields"].append({ "name": "Speed", "value": data["speed"], "inline": True })
+                embed["color"] = 0x9dffb0
+
+            elif args[0] == "bugs":
+                embed["fields"].append({ "name": "Price (Flick)", "value": "<:bells:962313051309236224> {}".format(data["price-flick"]), "inline": True })
+                embed["color"] = 0xc48d3f
+            
+            await msg.reply(embed = Embed.from_dict(embed))
+        else:
+            await msg.reply(":x: **|** Couldn't find the critter")
+
+
+        
+
 
 @command(discord=True)
 async def botw(args, msg, client):
