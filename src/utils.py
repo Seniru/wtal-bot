@@ -77,5 +77,7 @@ def normalize_msg_from_tc(msg, discord):
                 return f"@{ role.name }"
         return g
 
-    return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
+    res = re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
+    return re.sub(r"@here", "@|here", re.sub(r"@everyone", "@|everyone", res))
+
     
