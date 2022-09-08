@@ -242,7 +242,7 @@ class Discord(discord.Client):
         last_daily_data = await self.data_channel.fetch_message(data["data"]["daily"])
         now = datetime.now()
         if now > datetime.fromtimestamp(float(last_daily_data.content)) + timedelta(days=1):
-            for task in (("bday", []), ("stats", [])):
+            for task in (("bday", [])):
                 try:
                     await commands[task[0]]["f"](task[1], None, self)
                 except Exception as e:
