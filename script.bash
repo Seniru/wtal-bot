@@ -1,10 +1,5 @@
-cd discordslashcommands
-pip install -r requirements.txt
-python setup.py install
-cd ..
-
 function run() {
-    python src/main.py || run
+    python3.8 src/main.py || run
 }
 
 run

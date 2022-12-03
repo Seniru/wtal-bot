@@ -52,6 +52,7 @@ class Discord(discord.Client):
         await self.start_period_tasks()
 
     async def on_message(self, message):
+        print(message.content)
 
         if message.content.startswith(">"):
             content = re.match(r"^>\s*((.|\n)*)", message.content).group(1)
