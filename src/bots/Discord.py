@@ -19,6 +19,7 @@ DISCORD_ENDPOINT = "https://discord.com/api/v9"
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 class Discord(discord.Client):
 
