@@ -56,9 +56,8 @@ class Discord(discord.Client):
         print(message.content)
 
         if message.content.startswith(">"):
-            content = re.match(r"^>\s*((.|\n)*)", message.content).group(1)
+            content = re.match(r"^>\s*((.|\n)*)", message.content).groups()[0]
             args = re.split(r"\s+", content)
-
             if args[0] in commands and commands[args[0]]["discord"]:
                 cmd = commands[args[0]]
                 if cmd["allowed_roles"]:
