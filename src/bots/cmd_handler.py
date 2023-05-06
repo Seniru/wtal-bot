@@ -214,7 +214,7 @@ async def profile(args, msg, client):
         a801_profile["avatar"] = re.sub(r"_\d+", "", a801_profile["avatar"])
 
     soulnick, soultag = a801_profile["soulmate"] or (None, None)
-
+    tfm_profile = None
     try:
         offline = False
         await client.tfm.sendCommand(f"profile {name}")
@@ -223,7 +223,6 @@ async def profile(args, msg, client):
         offline = True
 
     finally:
-
         embed = {
             "title": "{} {}".format(
                 {"Masculin": ":male_sign:", "Féminin": ":female_sign:", "None": ""}[a801_profile["gender"] or "None"],
@@ -269,36 +268,37 @@ async def profile(args, msg, client):
         }
 
         if not offline:
-            mode_stats = tfm_profile.stats.modeStats
-            embed["fields"] = [
-                { "inline": True, "name": "Racing", "value": "<:p17:836550197366226956> Rounds played: {}\n<:p17:836550197366226956> Rounds completed: {}\n<:p17:836550197366226956> Podiums: {}\n<:p17:836550197366226956> Firsts: {}".format(
-                    mode_stats[0][1],
-                    mode_stats[1][1],
-                    mode_stats[2][1],
-                    mode_stats[3][1]
-                )},
-                { "inline": True, "name": "Survivor", "value": "<:sorbibor:836550196518846464> Rounds played: {}\n<:sorbibor:836550196518846464> Times shaman: {}\n<:sorbibor:836550196518846464> Killed mice: {}\n<:sorbibor:836550196518846464> Survives: {}".format(
-                    mode_stats[4][1],
-                    mode_stats[5][1],
-                    mode_stats[6][1],
-                    mode_stats[7][1]
-                )},
-                { "inline": True, "name": "Defilante", "value": "<:defi:836550198389768193> Rounds played: {}\n<:defi:836550198389768193> Rounds completed: {}\n<:defi:836550198389768193> Gathered points: {}".format(
-                    mode_stats[8][1],
-                    mode_stats[9][1],
-                    mode_stats[10][1]
-                )},
-                { "inline": True, "name": "Shaman", "value": "<:cheese:691158951563362314> Shaman cheese: {}\n<:shaman:836550192387850251> Saves: {}/{}/{}".format(
-                    tfm_profile.stats.shamanCheese,
-                    tfm_profile.stats.normalModeSaves,
-                    tfm_profile.stats.hardModeSaves,
-                    tfm_profile.stats.divineModeSaves
-                )}
-            ]
-        roles = json.loads(requests.get(f"https://cheese.formice.com/api/players/{fName}-{disc}").text)["tfm_roles"]
-        embed["color"] = ({ 
-            "admin": 0xEB1D51, "mod": 0xBABD2F, "sentinel": 0x2ECF73, "mapcrew": 0x2F7FCC, "module": 0x95D9D6, "funcorp": 0xF89F4B
-        }).get(roles[0] if roles else ("admin" if disc == "0001" else 0), 0x009D9D)
+            pass
+            #mode_stats = tfm_profile.stats.modeStats
+            #print(mode_stats)
+            #embed["fields"] = [
+            #    { "inline": True, "name": "Racing", "value": "<:p17:836550197366226956> Rounds played: {}\n<:p17:836550197366226956> Rounds completed: {}\n<:p17:836550197366226956> Podiums: {}\n<:p17:836550197366226956> Firsts: {}".format(
+            #        mode_stats[0][1],
+            #        mode_stats[1][1],
+            #        mode_stats[2][1],
+            #        mode_stats[3][1]
+            #    )},
+            #    { "inline": True, "name": "Survivor", "value": "<:sorbibor:836550196518846464> Rounds played: {}\n<:sorbibor:836550196518846464> Times shaman: {}\n<:sorbibor:836550196518846464> Killed mice: {}\n<:sorbibor:836550196518846464> Survives: {}".format(
+            #        mode_stats[4][1],
+            #        mode_stats[5][1],
+            #        mode_stats[6][1],
+            #        mode_stats[7][1]
+            #    )},
+            #    { "inline": True, "name": "Defilante", "value": "<:defi:836550198389768193> Rounds played: {}\n<:defi:836550198389768193> Rounds completed: {}\n<:defi:836550198389768193> Gathered points: {}".format(
+            #        mode_stats[8][1],
+            #        mode_stats[9][1],
+            #        mode_stats[10][1]
+            #    )},
+            #    { "inline": True, "name": "Shaman", "value": "<:cheese:691158951563362314> Shaman cheese: {}\n<:shaman:836550192387850251> Saves: {}/{}/{}".format(
+            #        tfm_profile.stats.shamanCheese,
+            #        tfm_profile.stats.normalModeSaves,
+            #        tfm_profile.stats.hardModeSaves,
+            #        tfm_profile.stats.divineModeSaves
+            #    )}
+            #]
+        #embed["color"] = ({ 
+        #    "admin": 0xEB1D51, "mod": 0xBABD2F, "sentinel": 0x2ECF73, "mapcrew": 0x2F7FCC, "module": 0x95D9D6, "funcorp": 0xF89F4B
+        #}).get(roles[0] if roles else ("admin" if disc == "0001" else 0), 0x009D9D)
         await msg.reply(embed = Embed.from_dict(embed))
 
 @command(discord=True)

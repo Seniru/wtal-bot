@@ -53,7 +53,6 @@ class Discord(discord.Client):
         await self.start_period_tasks()
 
     async def on_message(self, message):
-        print(message.content)
 
         if message.content.startswith(">"):
             content = re.match(r"^>\s*((.|\n)*)", message.content).groups()[0]
@@ -106,14 +105,18 @@ class Discord(discord.Client):
                 await message.reply(embed = discord.Embed.from_dict(res))
 
         elif self.user.id in message.raw_mentions:
-            fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).text
+            fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).json()
             await message.reply(embed = discord.Embed.from_dict({
                 "title": "{}! Wanna hear a fact? :bulb:".format(random.choice([
                     "Hi", "Hello", "Howdy", "Hola", "Yo", "Wassup", "Hola", "Namasthe", "Hi there", "Greetings",
                     "What's going on", "How's everything", "Good to see you", "Great to see you", "Nice to see you",
                     "Saluton", "What's new", "How are you feeling today","Hey there"
                 ])),
-                "description": fact,
+                "description": fact["text"],
+                "provider": {
+                    "name": fact["source"],
+                    "url": fact["source_url"]
+                },
                 "color": 0x2987ba
             }))
 
