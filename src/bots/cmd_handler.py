@@ -3,13 +3,16 @@ import functools
 import json
 import re
 import math
+import os
 from datetime import datetime, timedelta
 
 import requests
 import utils
 from aiotfm import Packet
 from data import data
-from discord import Embed
+from discord import Embed, app_commands, AppCommandOptionType
+from docstring_parser import parse_from_object as parse_doc
+
 
 from bots import translations
 
@@ -18,6 +21,7 @@ commands = {}
 def command(discord=False, tfm=False, whisper_command=False, aliases=None, allowed_roles=None):
 
     def decorator(f):
+        
         functools.wraps(f)
         commands[f.__name__] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command, "allowed_roles": allowed_roles }
 
@@ -45,6 +49,12 @@ from .commands import qotd as qhandler
 
 @command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])
 async def qotd(args, msg, client):
+    """Question of the day
+
+    Args:
+        option (string): add, queue
+        data (string): Relevant data
+    """
     if len(args) > 0:
         if hasattr(qhandler, args[0]):
             await qhandler.__getattribute__(args[0])(args[1:], msg, client)
@@ -62,10 +72,14 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 
 @command(discord=True)
 async def ping(args, msg, client):
+    """Check if the bot is alive
+    """
     await msg.reply("Pong")
 
 @command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ] )
 async def restart(args, msg, client):
+    """Restarts the bot
+    """
     import sys
     if msg:
         await msg.reply(":hourglass_flowing_sand: | Restarting...")
@@ -73,6 +87,11 @@ async def restart(args, msg, client):
 
 @command(discord=True, allowed_roles = [data["roles"]["admin"]] )
 async def room(args, msg, client):
+    """Changes the room of the bot
+
+    Args:
+        room (string): The room
+    """
     try:
         await client.tfm.joinRoom(" ".join(args))
         room = await client.tfm.wait_for("on_joined_room", timeout=4)
@@ -82,6 +101,11 @@ async def room(args, msg, client):
 
 @command(discord=True, allowed_roles = [ data["roles"]["admin"], data["roles"]["event"] ])
 async def setmsg(args, msg, client):
+    """Sets the tribe's greeting message
+
+    Args:
+        message (string): New greeting message
+    """
     try:
         await client.tfm.sendCP(98, Packet().writeUTF(" ".join(args)))
         await client.tfm.wait_for("on_raw_cp", lambda tc, packet: tc == 125, 2)
@@ -91,11 +115,15 @@ async def setmsg(args, msg, client):
 
 @command(tfm=True, whisper_command=True)
 async def inv(args, msg, client):
-    if not msg.author.username == "Finnick#7866":
-        await client.recruit(msg.author.username)
+    await client.recruit(msg.author.username)
 
 @command(discord=True, aliases=["t"])
 async def tc(args, msg, client):
+    """Sends a message to the tribe chat
+
+    Args:
+        message (string): Message to be sent
+    """
     if len(args) == 0: return await msg.add_reaction("🤡")
     nick, _ = utils.extract_name_and_tag((utils.get_tfm_nick_format(msg.author.nick or msg.author.name) or (msg.author.nick or msg.author.name)))
     await client.tfm.sendTribeMessage(utils.normalize_msg_from_discord("[" + nick + "] " + " ".join(args), client))
@@ -103,6 +131,8 @@ async def tc(args, msg, client):
 
 @command(discord=True, tfm=True)
 async def who(args, msg, client):
+    """Checks who is online in game
+    """
 
     if client.client_type == "Discord": # Discord command
         tribe = await client.tfm.getTribe(False)
@@ -142,6 +172,11 @@ async def who(args, msg, client):
     whisper_command=True
 )
 async def verify(args, msg, client):
+    """Verify yourself
+
+    Args:
+        force (boolean, optional): Forcefully try to verify (for debugging purposes)
+    """
     if client.client_type == "Discord": # Discord command
         verified_role = client.main_guild.get_role(data["roles"]["verified"])
         admin_role = client.main_guild.get_role(data["roles"]["admin"])
@@ -167,6 +202,11 @@ async def verify(args, msg, client):
         
 @command(discord=True, aliases=["p"])
 async def profile(args, msg, client):
+    """Checks the Transformice profile of a player or yourself
+
+    Args:
+        name (string, optional): Name of the player, none to see info of yourself
+    """
 
     target = None
     tribe = await client.tfm.getTribe(True)
@@ -303,6 +343,8 @@ async def profile(args, msg, client):
 
 @command(discord=True)
 async def bday(args, msg, client):
+    """Birthday list
+    """
     channel = client.main_guild.get_channel(data["channels"]["bday"])
     raw_data = ""
     for msg_id in data["data"]["bday"]:
@@ -332,6 +374,8 @@ async def bday(args, msg, client):
 
 @command(discord=True)
 async def stats(args, msg, client):
+    """Check tribe stats
+    """
     res = json.loads(requests.get("https://cheese.formice.com/api/tribes/A%20Place%20to%20Call%20Home").text)
     position = json.loads(requests.get("https://cheese.formice.com/api/position/overall?value={}&entity=tribe".format(res["stats"]["score"]["overall"])).text)["position"]
     method = msg.reply if msg else client.main_guild.get_channel(data["channels"]["stats"]).send
@@ -359,6 +403,12 @@ async def stats(args, msg, client):
     
 @command(discord=True)
 async def acnh(args, msg, client):
+    """Animal Crossing New Horizons data
+
+    Args:
+        type (string): Type of the data
+        item (string): The item you are looking for
+    """
     if len(args) < 2:
         return await msg.reply(":x: **|** Invalid format\nCorrect format: `> acnh <type> <item>`. `type` could be one of the following: \n<:rolepeppyrabbit:929048043611889684> villagers\n<:fish:960948399283249202> fish\n<:bug:961894768290443294> bugs\n<:deap_sea:961895000889770024> sea\n\n`item` is the thing you are looking for!")
     if args[0] == "villagers":
@@ -438,6 +488,11 @@ async def acnh(args, msg, client):
 
 @command(discord=True)
 async def botw(args, msg, client):
+    """Breath of the Wild data
+
+    Args:
+        item (string): The item you are looking for
+    """
     
     if len(args) == 0:
         return await msg.reply(":x: **|** Please provide an entry")
@@ -493,12 +548,42 @@ async def botw(args, msg, client):
 
 
 @command(discord=True)
-async def test(args, msg, client):
-    from discord_components import DiscordComponents, Button, Select, SelectOption
-
-    await msg.reply(content="Hello", components=[Button(label="hello")])
-    interaction = await client.wait_for("button_click")
-    print(interaction)
-    #await interaction.
-    await interaction.respond(content="ur mom")
-
+async def update(args, msg, client):
+    """Updates the application commands
+    """
+    import time
+    cmds = await app_commands.CommandTree(client).fetch_commands(guild = client.main_guild)
+    cmds = list(map(lambda cmd: cmd.name, cmds))
+    await msg.reply("Updating...")
+    i = 0
+    cmdlist = list(commands.keys())
+    while i < len(cmdlist):
+        cmd = cmdlist[i]
+        data = commands[cmd]
+        doc = parse_doc(data["f"])
+        cmd_data = {
+            "name": cmd,
+            "type": 1,
+            "description": doc.short_description,
+            "options": []
+        }
+        for param in doc.params:
+            param_data = {
+                "name": param.arg_name,
+                "description": param.description,
+                "required": not param.is_optional
+            }
+            param_data["type"] = AppCommandOptionType[param.type_name][1]
+            cmd_data["options"].append(param_data)
+        headers = {
+            "Authorization": "Bot {}".format(os.environ["DISCORD"])
+        }
+        r = requests.post(f"https://discord.com/api/v10/applications/{client.application_id}/guilds/{client.main_guild.id}/commands", headers=headers, json=cmd_data)
+        if r.status_code == 429:
+            time.sleep(2)
+            continue
+        print(r.status_code, r.content)
+        time.sleep(1)
+        i += 1
+        
+    await msg.channel.send(":white_check_mark: Updated!")

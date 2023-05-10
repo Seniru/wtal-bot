@@ -1,3 +1,4 @@
+import discord
 import random
 import re
 
@@ -80,4 +81,20 @@ def normalize_msg_from_tc(msg, discord):
     res = re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
     return re.sub(r"@here", "@|here", re.sub(r"@everyone", "@|everyone", res))
 
-    
+class MockInteraction(discord.Interaction):
+    def __init__(self, interaction, client):
+        self.interaction = interaction
+        for attr in interaction.__slots__:
+            if attr.startswith("_"):
+                continue
+            self.__setattr__(attr, interaction.__getattribute__(attr))
+        self.author = client.main_guild.get_member(interaction.user.id)
+        self.member = self.author
+        self.reply = interaction.response.send_message
+        self.options = interaction.data.get("options", [])
+        self.content = []
+        for option in self.options:
+            # todo: see how it works with mentions later
+            self.content.append(option["value"])
+        self.content = " ".join(self.content)
+        self.args = self.content.split(" ")

@@ -4,6 +4,8 @@ from discord import Embed
 from data import data
 
 async def cmds(args, msg, client):
+    """Lists all the custom commands
+    """
     await msg.reply(embed = Embed.from_dict({
         "title": "Available custom commands",
         "description": "• " + "\n• ".join(client.ccmds.keys()),
@@ -11,6 +13,11 @@ async def cmds(args, msg, client):
     }))
 
 async def cmd(args, msg, client):
+    """Displays information about a custom command
+
+    Args:
+        command (string): The command
+    """
     cmd_name = utils.get(args, 0, "")
     cmd = client.ccmds.get(cmd_name)
     if not cmd:
@@ -25,6 +32,13 @@ async def cmd(args, msg, client):
     }))
 
 async def ccmd(args, msg, client):
+    """Creates a new custom command
+
+    Args:
+        name (string): Command name
+        compiler (string): Language used to run the program
+        source (string): Link to the code
+    """
     if len(args) < 3:
         return await msg.reply(":x: Failed to create the command. Please supply all the arguments\nFormat: `> ccmd <name> <compiler> <source>`")
     name, compiler, source = args[0], args[1], args[2]
@@ -39,6 +53,11 @@ async def ccmd(args, msg, client):
 
 
 async def dcmd(args, msg, client):
+    """Deletes a custom command
+
+    Args:
+        command (string): Command name
+    """
     cmd_name = utils.get(args, 0, "")
     cmd = client.ccmds.get(cmd_name)
     admin_role = client.main_guild.get_role(data["roles"]["admin"])
@@ -49,6 +68,13 @@ async def dcmd(args, msg, client):
     await msg.reply(":white_check_mark: | Deleted the command")
 
 async def ecmd(args, msg, client):
+    """Edits a custom command
+
+    Args:
+        name (string): Command name
+        compiler (string): Language used to run the program
+        source (string): Link to the code
+    """
     if len(args) < 3:
         return await msg.reply(":x: Failed to edit the command. Please supply all the arguments\nFormat: `> ecmd <name> <compiler> <source>`")
     name, compiler, source = args[0], args[1], args[2]

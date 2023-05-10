@@ -16,4 +16,3 @@ discord.set_tfm_instance(tfm)
 loop.create_task(discord.start(os.getenv("DISCORD")))
 tfm.run()
 loop.run_forever()
-# fuck can you deploy the thing
