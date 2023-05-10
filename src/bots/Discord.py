@@ -6,11 +6,9 @@ import re
 from datetime import datetime, timedelta
 
 import discord
-import discordslashcommands as slash
 import requests
 import utils
 from data import data
-#from discord_components import Button, DiscordComponents, Select, SelectOption
 
 from bots.cmd_handler import commands
 
