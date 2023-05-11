@@ -1,5 +1,7 @@
+#!/bin/bash
+
 function run() {
-    python3.8 src/main.py || run
+    python src/main.py || run
 }
 
 run

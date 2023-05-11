@@ -9,7 +9,7 @@ from bots.Discord import Discord
 loop = asyncio.get_event_loop()
 
 discord = Discord()
-tfm = Transformice("Wtal#5272", os.getenv("PASSWORD"), loop, discord)
+tfm = Transformice(os.getenv("USERNAME"), os.getenv("PASSWORD"), loop, discord)
 
 discord.set_tfm_instance(tfm)
 
