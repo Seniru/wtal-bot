@@ -16,12 +16,12 @@ DISCORD=DISCORD_TOKEN
 ```
 Replace `TRANSFORMICE_NICKNAME_OF_BOT`, `TRANSFORMICE_PASSWORD_OF_BOT` and `DISCORD_TOKEN` with your secret values
 
-If you have docker installed in your machine follow the following steps to run the bot. Otherwise jump [here](#running-without-docke)
+If you have docker installed in your machine follow the following steps to run the bot. Otherwise jump [here](#running-without-docker)
 
 #### Running with Docker
 ```bash
 sudo docker pull senirup/wtal-bot
-sudo docker run --env-file ./.env senirup/wtal-bot
+sudo docker-compose up
 ```
 
 ### Running without Docker

@@ -55,7 +55,7 @@ class Transformice(aiotfm.Client):
 
 
 	def run(self, block=True):
-
+		print("[INFO][TFM] Starting...")
 		self.loop.run_until_complete(self.start())
 		if block:
 			self.loop.run_forever()

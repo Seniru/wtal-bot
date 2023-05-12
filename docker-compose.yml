@@ -1,0 +1,7 @@
+services:
+    bot:
+        build: .
+        env_file: ./.env
+        working_dir: /src
+        volumes:
+            - ./:/src
