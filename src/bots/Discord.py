@@ -71,7 +71,9 @@ class Discord(discord.Client):
                         }))
 
                 await cmd["f"](args[1:], message, self)
-            elif args[0] in self.ccmds:
+            else:
+
+                
 
                 ccmd = self.ccmds[args[0]]
                 code = requests.get(ccmd["source"]).content.decode("utf-8")
@@ -119,17 +121,6 @@ class Discord(discord.Client):
             }))
 
     async def on_interaction(self, interaction: discord.Interaction):
-        #await interaction.end(content = "** **")
-        #if cmd_name in commands and commands[cmd_name]["discord"]:
-        #    cmd = commands[cmd_name]
-        #    interaction.reply = self.main_guild.get_channel(interaction.channel.id).send
-        #    interaction.send = self.main_guild.get_channel(interaction.channel.id).send
-        #    interaction.options = list(map(lambda o: o.value, interaction.command.options))
-        #    interaction.mentions = list(
-        #        map(
-        #            lambda m: self.main_guild.get_member(int(re.match(r".*?(\d+).*", m)[1])),
-        #            filter(lambda o: re.match(r"^<@!?(\d+)>$", o), interaction.options)
-        #        ))
         interaction = utils.MockInteraction(interaction, self)
 
         if interaction.type == discord.InteractionType.application_command:
