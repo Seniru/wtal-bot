@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import discord
 import requests
 import utils
+import aiomysql
 from data import data
 
 from bots.cmd_handler import commands
@@ -45,8 +46,13 @@ class Discord(discord.Client):
         self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
         self.mod_data = json.loads(self.mod_data.content[7:-3])
 
-        self.slash = {}#slash.Manager(self)
-        #DiscordComponents(self)
+        self.db = await aiomysql.create_pool(
+            host='db',
+            port=int(os.getenv("MYSQL_PORT")),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
+            db=os.getenv("MYSQL_DATABASE")
+        )
 
         await self.start_period_tasks()
 
@@ -73,36 +79,44 @@ class Discord(discord.Client):
                 await cmd["f"](args[1:], message, self)
             else:
 
-                
+                async with self.db.acquire() as conn:
+                    cur = await conn.cursor(aiomysql.DictCursor)
+                    await cur.execute("SELECT * FROM CustomCommands \
+                        WHERE name LIKE %s;",
+                        [ args[0] ]
+                    )
 
-                ccmd = self.ccmds[args[0]]
-                code = requests.get(ccmd["source"]).content.decode("utf-8")
+                    ccmd = await cur.fetchone()
+                    if not ccmd:
+                        return
+                        
+                    code = requests.get(ccmd["source"]).content.decode("utf-8")
 
-                stdin = content[len(args[0]) + 1:]
+                    stdin = content[len(args[0]) + 1:]
 
-                res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
-                    data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "''") }),
-                    headers = { "content-Type": "application/json" }
-                )
+                    res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
+                        data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "''") }),
+                        headers = { "content-Type": "application/json" }
+                    )
 
-                if res.status_code != 200:
-                    return await message.reply(":x: | We encountered an internal error. Please try again soon!")
+                    if res.status_code != 200:
+                        return await message.reply(":x: | We encountered an internal error. Please try again soon!")
 
-                res = json.loads(res.content.decode("utf-8"))
+                    res = json.loads(res.content.decode("utf-8"))
 
-                if res["status"] != "0":
-                    return await message.reply(embed = discord.Embed.from_dict({
-                        "title": ":x: Error in the command",
-                        "description": "Contact the author of this command to fix it\n\n**Error log**:\n ```\n{}```".format((res["program_error"] or "")),
-                        "color": 0xcc0000
+                    if res["status"] != "0":
+                        return await message.reply(embed = discord.Embed.from_dict({
+                            "title": ":x: Error in the command",
+                            "description": "Contact the author of this command to fix it\n\n**Error log**:\n ```\n{}```".format((res["program_error"] or "")),
+                            "color": 0xcc0000
 
-                    }))
+                        }))
 
-                res = json.loads(res["program_output"])
-                if not res:
-                    return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
+                    res = json.loads(res["program_output"])
+                    if not res:
+                        return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
 
-                await message.reply(embed = discord.Embed.from_dict(res))
+                    await message.reply(embed = discord.Embed.from_dict(res))
 
         elif self.user.id in message.raw_mentions:
             fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).json()
@@ -198,7 +212,7 @@ class Discord(discord.Client):
         if str(r) == "Cannot send a packet to a closed Connection.":
             return await commands["restart"]["f"]([], None, self)
 
-        await self.get_channel(data["channels"]["staff"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
+        await self.get_channel(data["channels"]["logs"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
 
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)
@@ -243,7 +257,7 @@ class Discord(discord.Client):
                     await commands[task[0]]["f"](task[1], None, self)
                 except Exception as e:
                     import traceback
-                    await self.main_guild.get_channel(data["channels"]["staff"]).send(
+                    await self.main_guild.get_channel(data["channels"]["logs"]).send(
                         "**`[DAILY TASK FAILURE|{0}]`** \n```py\n{1}```"
                         .format(task[0].upper(), traceback.format_exc()))
             await last_daily_data.edit(content=str(now.timestamp()))

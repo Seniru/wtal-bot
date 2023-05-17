@@ -6,11 +6,7 @@ services:
         restart: always
         ports:
             - 3306:3306
-        environment:
-            MYSQL_DATABASE: db
-            MYSQL_USER: user
-            MYSQL_PASSWORD: password
-            MYSQL_ROOT_PASSWORD: root
+        env_file: ./.env
         volumes:
            - my-db:/var/lib/mysql
 
