@@ -1,7 +1,23 @@
+version: "3.3"
 services:
+    db:
+        container_name: db
+        build: ./database
+        restart: always
+        ports:
+            - 3306:3306
+        env_file: ./.env
+        volumes:
+           - my-db:/var/lib/mysql
+
     bot:
+        container_name: bot
+        depends_on:
+            - db
         build: .
         env_file: ./.env
         working_dir: /src
         volumes:
             - ./:/src
+volumes:
+    my-db:

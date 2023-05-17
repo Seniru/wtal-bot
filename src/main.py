@@ -5,7 +5,7 @@ from bots.Transformice import Transformice
 #sys.path.append("discordslashcommands")
 from bots.Discord import Discord
 
-print("[INFO][SYSTME] Starting...")
+print("[INFO][SYSTEM] Starting...")
 
 loop = asyncio.get_event_loop()
 
