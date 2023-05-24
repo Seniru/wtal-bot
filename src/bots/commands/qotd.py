@@ -1,4 +1,6 @@
 async def queue(args, msg, client):
+    """Check the question queueu
+    """
 
     import json
     from discord import Embed
@@ -14,6 +16,12 @@ async def queue(args, msg, client):
     }))
 
 async def add(args, msg, client):
+    """Adds a question
+
+    Args:
+        index (integer): The place to add in the queue
+        question (string): The question
+    """
     if args[0].isnumeric():
         client.questions["questions"].insert(int(args[0]), " ".join(args[1:]))
     else:   
@@ -23,6 +31,11 @@ async def add(args, msg, client):
     await msg.reply("Added the question!")
 
 async def remove(args, msg, client):
+    """Removes a question
+
+    Args:
+        index (integer, optional): The question number to remove. Removes first question if none
+    """
     try:
         client.questions["questions"].pop(int(args[0] if len(args) > 0 else "1") -1)
         await client.update_qotd()
@@ -32,11 +45,16 @@ async def remove(args, msg, client):
 
 
 async def ask(args, msg, client):
+    """Asks the first available question in the queue
+
+    Args:
+        force (boolean, optional): Whether to bypass the time limit
+    """
     from datetime import datetime, timedelta
     from discord import Embed
     from data import data
     import json
-    force = len(args) > 0 and args[0] == "force"
+    force = len(args) > 0 and ("force", "true") in args[0].lower()
     now, lastpost = datetime.now(), datetime.fromtimestamp(client.questions["last-post"])
     cooldown_over = now > (lastpost + timedelta(seconds = 1 * 60 * 60 * 24))
     qotd_channel = client.get_channel(data["channels"]["qotd"])

@@ -93,8 +93,10 @@ class MockInteraction(discord.Interaction):
         self.reply = interaction.response.send_message
         self.options = interaction.data.get("options", [])
         self.content = []
-        for option in self.options:
-            # todo: see how it works with mentions later
-            self.content.append(option["value"])
+        if get(self.options, 0, None):
+            for option in self.options if not self.options[0].get("options") else self.options[0]["options"]:
+                if option.get("value") and option["value"]:
+                    self.content.append(str(option["value"]))
         self.content = " ".join(self.content)
+        # splitting args after joining to avoid having empty string args
         self.args = self.content.split(" ")

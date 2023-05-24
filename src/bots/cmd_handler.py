@@ -18,16 +18,32 @@ from bots import translations
 
 commands = {}
 
-def command(discord=False, tfm=False, whisper_command=False, aliases=None, allowed_roles=None):
+def command(discord=False, tfm=False, whisper_command=False, aliases=None, allowed_roles=None, subcommands=None):
 
     def decorator(f):
         
         functools.wraps(f)
-        commands[f.__name__] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command, "allowed_roles": allowed_roles }
+        commands[f.__name__] = { 
+            "f": f,
+            "name": f.__name__,
+            "discord": discord,
+            "tfm": tfm,
+            "whisper_command": whisper_command,
+            "allowed_roles": allowed_roles,
+            "subcommands": subcommands
+        }
 
         if aliases:
             for alias in aliases:
-                commands[alias] = { "f": f, "discord": discord, "tfm": tfm, "whisper_command": whisper_command, "allowed_roles": allowed_roles }
+                commands[alias] = { 
+                    "f": f,
+                    "name": f.__name__,
+                    "discord": discord,
+                    "tfm": tfm,
+                    "whisper_command": whisper_command,
+                    "allowed_roles": allowed_roles,
+                    "subcommands": subcommands
+                }   
         
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
@@ -47,7 +63,7 @@ command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"][
 from .commands import qotd as qhandler
 
 
-@command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ])
+@command(discord = True, allowed_roles = [ data["roles"]["admin"], data["roles"]["mod"] ], subcommands = qhandler)
 async def qotd(args, msg, client):
     """Question of the day
 
@@ -55,9 +71,10 @@ async def qotd(args, msg, client):
         option (string): add, queue
         data (string): Relevant data
     """
-    if len(args) > 0:
-        if hasattr(qhandler, args[0]):
-            await qhandler.__getattribute__(args[0])(args[1:], msg, client)
+    #if len(args) > 0:
+    #    if hasattr(qhandler, args[0]):
+    #        await qhandler.__getattribute__(args[0])(args[1:], msg, client)
+    pass
 
 from .commands import mod
 
@@ -547,6 +564,33 @@ async def botw(args, msg, client):
     await msg.reply(embed = Embed.from_dict(embed))
 
 
+def get_cmd(data, subcommand=None):
+    """Helper function for `update`"""
+    
+    doc = parse_doc(data["f"])
+    cmd_data = {
+        "name": data["name"],
+        "type": 1,
+        "description": doc.short_description,
+        "options": []
+    }
+    if data["subcommands"]:
+        for scmd, f in data["subcommands"].__dict__.items():
+            if scmd.startswith("__"): continue
+            # shitty implementation for subcommands I know but it should be fine for now
+            cmd_data["options"].append(get_cmd({ "name": scmd, "f": f, "subcommands": None }, subcommand=True))
+    else:
+        for param in doc.params:
+            param_data = {
+                "name": param.arg_name,
+                "description": param.description,
+                "required": not param.is_optional
+            }
+            param_data["type"] = AppCommandOptionType[param.type_name][1]
+            cmd_data["options"].append(param_data)
+    return cmd_data
+
+
 @command(discord=True)
 async def update(args, msg, client):
     """Updates the application commands
@@ -557,33 +601,20 @@ async def update(args, msg, client):
     await msg.reply("Updating...")
     i = 0
     cmdlist = list(commands.keys())
+    headers = {
+        "Authorization": "Bot {}".format(os.environ["DISCORD"])
+    }
     while i < len(cmdlist):
         cmd = cmdlist[i]
-        data = commands[cmd]
-        doc = parse_doc(data["f"])
-        cmd_data = {
-            "name": cmd,
-            "type": 1,
-            "description": doc.short_description,
-            "options": []
-        }
-        for param in doc.params:
-            param_data = {
-                "name": param.arg_name,
-                "description": param.description,
-                "required": not param.is_optional
-            }
-            param_data["type"] = AppCommandOptionType[param.type_name][1]
-            cmd_data["options"].append(param_data)
-        headers = {
-            "Authorization": "Bot {}".format(os.environ["DISCORD"])
-        }
-        r = requests.post(f"https://discord.com/api/v10/applications/{client.application_id}/guilds/{client.main_guild.id}/commands", headers=headers, json=cmd_data)
+        data = get_cmd(commands[cmd])
+        
+        r = requests.post(f"https://discord.com/api/v10/applications/{client.application_id}/guilds/{client.main_guild.id}/commands", headers=headers, json=data)
         if r.status_code == 429:
             time.sleep(2)
             continue
         print(r.status_code, r.content)
         time.sleep(1)
+
         i += 1
         
     await msg.channel.send(":white_check_mark: Updated!")

@@ -76,6 +76,9 @@ class Discord(discord.Client):
                             "color": 0xcc0000
                         }))
 
+                if cmd["subcommands"]:
+                    return await cmd["subcommands"].__dict__[args[1]](args[2:], message, self)
+                
                 await cmd["f"](args[1:], message, self)
             else:
 
@@ -153,6 +156,8 @@ class Discord(discord.Client):
                             ),
                             "color": 0xcc0000
                         }))
+            if cmd["subcommands"]:
+                    return await cmd["subcommands"].__dict__[interaction.options[0]["name"]](interaction.args, interaction, self)
             await cmd["f"](interaction.args, interaction, self)
 
     async def on_member_join(self, member):
