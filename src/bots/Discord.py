@@ -17,8 +17,6 @@ WANDBOX_ENDPOINT = "https://wandbox.org/api"
 DISCORD_ENDPOINT = "https://discord.com/api/v9"
 
 intents = discord.Intents.all()
-#intents.members = True
-#intents.message_content = True
 
 class Discord(discord.Client):
 
@@ -217,6 +215,7 @@ class Discord(discord.Client):
         if str(r) == "Cannot send a packet to a closed Connection.":
             return await commands["restart"]["f"]([], None, self)
 
+        print(f"[ERR][DISCORD@evt_{evt}]\n{traceback.format_exc()}")
         await self.get_channel(data["channels"]["logs"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
 
     async def send_verification_key(self, member):
@@ -250,16 +249,19 @@ class Discord(discord.Client):
         """.format(json.dumps(self.mod_data)))
 
     async def start_period_tasks(self):
-        print("[INFO] Checking for periodic tasks...")
+        print("[INFO][SYSTEM] Checking for periodic tasks...")
         # check qotd
         await commands["qotd"]["f"](["ask"], None, self)
         # other daily tasks
         last_daily_data = await self.data_channel.fetch_message(data["data"]["daily"])
         now = datetime.now()
         if now > datetime.fromtimestamp(float(last_daily_data.content)) + timedelta(days=1):
+            print("[INFO][SYSTEM] Starting daily tasks...")
             for task in (("bday", []), ):
+                print(f"[INFO][SYSTEM] Starting daily task {task[0].upper()}...")
                 try:
                     await commands[task[0]]["f"](task[1], None, self)
+                    print(f"[INFO][SYSTEM] Daily task {task[0].upper()} finished")
                 except Exception as e:
                     import traceback
                     await self.main_guild.get_channel(data["channels"]["logs"]).send(

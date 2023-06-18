@@ -32,6 +32,7 @@ def command(discord=False, tfm=False, whisper_command=False, aliases=None, allow
             "allowed_roles": allowed_roles,
             "subcommands": subcommands
         }
+        print(f"[INFO][DISCORD] Command registered: {f.__name__}")
 
         if aliases:
             for alias in aliases:
@@ -43,7 +44,8 @@ def command(discord=False, tfm=False, whisper_command=False, aliases=None, allow
                     "whisper_command": whisper_command,
                     "allowed_roles": allowed_roles,
                     "subcommands": subcommands
-                }   
+                }
+                print(f"[INFO][DISCORD] Command alias registered: {alias}")
         
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
@@ -100,6 +102,7 @@ async def restart(args, msg, client):
     import sys
     if msg:
         await msg.reply(":hourglass_flowing_sand: | Restarting...")
+    print("[INFO][SYSTEM] Restarting...")
     sys.exit("Restart")
 
 @command(discord=True, allowed_roles = [data["roles"]["admin"]] )
@@ -599,6 +602,7 @@ async def update(args, msg, client):
     cmds = await app_commands.CommandTree(client).fetch_commands(guild = client.main_guild)
     cmds = list(map(lambda cmd: cmd.name, cmds))
     await msg.reply("Updating...")
+    print(f"[INFO][DISCORD] Application commands updating...")
     i = 0
     cmdlist = list(commands.keys())
     headers = {
@@ -618,3 +622,4 @@ async def update(args, msg, client):
         i += 1
         
     await msg.channel.send(":white_check_mark: Updated!")
+    print(f"[INFO][DISCORD] Application commands updated!")

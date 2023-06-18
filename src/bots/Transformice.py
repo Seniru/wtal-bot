@@ -66,6 +66,7 @@ class Transformice(aiotfm.Client):
 
 	async def on_logged(self, player_id, username, played_time, community, pid):
 		self.pid = pid
+		print(f"[INFO][TFM] Logged in to the main server as [{community}] {username} ({username})")
 
 	async def on_ready(self):
 		import random
@@ -131,6 +132,7 @@ class Transformice(aiotfm.Client):
 			await commands[args[0]]["f"](args[1:], message, self)
 
 	async def on_error(self, evt, e, *args, **kwargs):
+		print(f"[ERR][TFM@evt_{evt}]\n{e}")
 		await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][TFM@evt_{evt}]` ```py\n{e}```")
 
 
