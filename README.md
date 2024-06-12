@@ -1,6 +1,7 @@
 # Wtal 
 > Discord and Transformice bot for the tribe **We talk a Lot**
 
+
 ### Developing
 
 First clone this repository to your machine
