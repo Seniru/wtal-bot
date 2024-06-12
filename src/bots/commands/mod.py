@@ -4,6 +4,11 @@ import utils
 from discord import Embed
 
 async def blacklist(args, msg, client):
+    """Blacklists a person or displays the blacklist
+
+    Args:
+        target (string, optional): Player to blacklist. Displays the current blacklist if none. 
+    """
     if len(args) == 0:
         return await msg.reply(embed = Embed.from_dict({
             "title": ":skull: Blacklist",
@@ -18,6 +23,11 @@ async def blacklist(args, msg, client):
     await kick([target], None, client)
 
 async def whitelist(args, msg, client):
+    """Whitelists a person
+
+    Args:
+        target (string): Person to whitelist
+    """
     if len(args) != 0 or client.mod_data["blacklist"].get(args[0]):
         del client.mod_data["blacklist"][args[0]]
         await client.update_mod_data()
@@ -25,6 +35,12 @@ async def whitelist(args, msg, client):
     await msg.reply(":x: | `\"{}\"` is not in the blacklist".format(args[0]))
 
 async def warn(args, msg, client):
+    """Warns a member
+
+    Args:
+        target (string): Member to warn
+        reason (string): Reason
+    """
     if not len(args) >= 2:
         return await msg.reply(":x: | Invalid syntax (`>warn <member> <reason>`)")
     warned = args[0] # no checks because I think mods are intelligent
@@ -37,6 +53,12 @@ async def warn(args, msg, client):
     await msg.reply(f":white_check_mark: | Warned {warned}!")
 
 async def rwarn(args, msg, client):
+    """Removes the specified warn from the member
+
+    Args:
+        target (string): Member to remove the warn
+        index (number): Which warning should be removed?
+    """
     if not len(args) >= 2 and not int(args[1]):
         return await msg.reply(":x: | Invalid syntax (`>rwarn <member> <index>`)")
     target = args[0]
@@ -55,6 +77,11 @@ async def rwarn(args, msg, client):
 
 
 async def warnings(args, msg, client):
+    """Checks the warnings for a member
+
+    Args:
+        target (string): The member
+    """
     if client.client_type == "Discord":
         if len(args) != 0 and (warns := client.mod_data["warnings"].get(args[0])):
             return await msg.reply(embed = Embed.from_dict({
@@ -68,6 +95,11 @@ async def warnings(args, msg, client):
         await msg.reply(":angel: | No warnings for {}".format(args[0]))
 
 async def kick(args, msg, client):
+    """Kicks a member from the tribe
+
+    Args:
+        target (string): Member to be kicked
+    """
 
     if len(args) < 1:
         return await msg.reply(":x: | Invalid syntax (`> kick [target]`)")
@@ -82,6 +114,12 @@ async def kick(args, msg, client):
     if msg: await msg.reply(":grimacing: | That person is not even in the tribe, what do you think??")
 
 async def setrank(args, msg, client):
+    """Changes the rank of a member in the tribe
+
+    Args:
+        target (string): The member
+        rank (string): New rank
+    """
 
     if len(args) < 2:
         return await msg.reply(":x: | Invalid syntax (`> setrank [target] [rank]`)")
@@ -97,8 +135,15 @@ async def setrank(args, msg, client):
             await client.tfm.sendCP(112, Packet().writeUTF(name).write8(r.id))
             return await msg.reply(":white_check_mark: | Changed the rank of {} to {}".format(name, rank))
     return await msg.reply(":x: Couldn't find the specified role (role: {})".format(rank))
+    
 
 async def nick(args, msg, client):
+    """Set nickname of a member in Discord
+
+    Args:
+        member (user): The member
+        nick (string): New nickname
+    """
 
     if len(args) < 2:
         return await msg.reply(":x: | Invalid syntax (`> nick [@member|id] [nick]`)")

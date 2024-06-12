@@ -6,23 +6,22 @@ import re
 from datetime import datetime, timedelta
 
 import discord
-import discordslashcommands as slash
 import requests
 import utils
+import aiomysql
 from data import data
-from discord_components import Button, DiscordComponents, Select, SelectOption
 
 from bots.cmd_handler import commands
 
 WANDBOX_ENDPOINT = "https://wandbox.org/api"
+DISCORD_ENDPOINT = "https://discord.com/api/v9"
 
-intents = discord.Intents.default()
-intents.members = True
+intents = discord.Intents.all()
 
 class Discord(discord.Client):
 
     def __init__(self):
-        
+
         super().__init__(intents = intents)
         self.client_type = "Discord"
         self.keys = {}
@@ -45,21 +44,21 @@ class Discord(discord.Client):
         self.mod_data = await self.data_channel.fetch_message(data["data"]["mod"])
         self.mod_data = json.loads(self.mod_data.content[7:-3])
 
-        self.slash = {}#slash.Manager(self)
-        DiscordComponents(self)
+        self.db = await aiomysql.create_pool(
+            host='db',
+            port=int(os.getenv("MYSQL_PORT")),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
+            db=os.getenv("MYSQL_DATABASE")
+        )
 
         await self.start_period_tasks()
 
     async def on_message(self, message):
-        
-        # temporary code
-        if (str(message.channel.id) == os.getenv("GRAVEYARD")) and (self.main_guild.get_role(data["roles"]["mafia_dead"]) in message.author.roles):
-            await self.get_channel(int(os.getenv("MEDIUM_CHAT"))).send(":speaking_head: **[**<@{}>**]** `{}`".format(message.author.id, message.content))
 
         if message.content.startswith(">"):
-            content = re.match(r"^>\s*((.|\n)*)", message.content).group(1)
+            content = re.match(r"^>\s*((.|\n)*)", message.content).groups()[0]
             args = re.split(r"\s+", content)
-
             if args[0] in commands and commands[args[0]]["discord"]:
                 cmd = commands[args[0]]
                 if cmd["allowed_roles"]:
@@ -75,78 +74,89 @@ class Discord(discord.Client):
                             "color": 0xcc0000
                         }))
 
+                if cmd["subcommands"]:
+                    return await cmd["subcommands"].__dict__[args[1]](args[2:], message, self)
+                
                 await cmd["f"](args[1:], message, self)
-            elif args[0] in self.ccmds:
+            else:
 
-                ccmd = self.ccmds[args[0]]
-                code = requests.get(ccmd["source"]).content.decode("utf-8")
+                async with self.db.acquire() as conn:
+                    cur = await conn.cursor(aiomysql.DictCursor)
+                    await cur.execute("SELECT * FROM CustomCommands \
+                        WHERE name LIKE %s;",
+                        [ args[0] ]
+                    )
 
-                stdin = content[len(args[0]) + 1:]
+                    ccmd = await cur.fetchone()
+                    if not ccmd:
+                        return
+                        
+                    code = requests.get(ccmd["source"]).content.decode("utf-8")
 
-                res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
-                    data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "''") }),
-                    headers = { "content-Type": "application/json" }
-                )
+                    stdin = content[len(args[0]) + 1:]
 
-                if res.status_code != 200:
-                    return await message.reply(":x: | We encountered an internal error. Please try again soon!")
+                    res = requests.post(WANDBOX_ENDPOINT + "/compile.json",
+                        data = json.dumps({ "compiler": ccmd["runner"], "code": code, "stdin": "{}\n{}".format(message.author.id, f"'{stdin}'" if stdin else "''") }),
+                        headers = { "content-Type": "application/json" }
+                    )
 
-                res = json.loads(res.content.decode("utf-8"))
+                    if res.status_code != 200:
+                        return await message.reply(":x: | We encountered an internal error. Please try again soon!")
 
-                if res["status"] != "0":
-                    return await message.reply(embed = discord.Embed.from_dict({
-                        "title": ":x: Error in the command",
-                        "description": "Contact the author of this command to fix it\n\n**Error log**:\n ```\n{}```".format((res["program_error"] or "")),
-                        "color": 0xcc0000
+                    res = json.loads(res.content.decode("utf-8"))
 
-                    }))
+                    if res["status"] != "0":
+                        return await message.reply(embed = discord.Embed.from_dict({
+                            "title": ":x: Error in the command",
+                            "description": "Contact the author of this command to fix it\n\n**Error log**:\n ```\n{}```".format((res["program_error"] or "")),
+                            "color": 0xcc0000
 
-                res = json.loads(res["program_output"])
-                if not res:
-                    return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
+                        }))
 
-                await message.reply(embed = discord.Embed.from_dict(res))
+                    res = json.loads(res["program_output"])
+                    if not res:
+                        return await message.reply(":x: | An error occured while running the command. Please ask the author of this command to fix the output format.")
+
+                    await message.reply(embed = discord.Embed.from_dict(res))
 
         elif self.user.id in message.raw_mentions:
-            fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).text
+            fact = requests.get("https://uselessfacts.jsph.pl/random.md?language=en", headers = { "User-Agent": "Seniru" }).json()
             await message.reply(embed = discord.Embed.from_dict({
                 "title": "{}! Wanna hear a fact? :bulb:".format(random.choice([
                     "Hi", "Hello", "Howdy", "Hola", "Yo", "Wassup", "Hola", "Namasthe", "Hi there", "Greetings",
                     "What's going on", "How's everything", "Good to see you", "Great to see you", "Nice to see you",
                     "Saluton", "What's new", "How are you feeling today","Hey there"
                 ])),
-                "description": fact,
+                "description": fact["text"],
+                "provider": {
+                    "name": fact["source"],
+                    "url": fact["source_url"]
+                },
                 "color": 0x2987ba
             }))
 
-    async def on_interaction(self, member, interaction):
-        await interaction.end(content = "** **")
-        cmd_name = interaction.command.name
-        if cmd_name in commands and commands[cmd_name]["discord"]:
-            cmd = commands[cmd_name]
-            interaction.author = self.main_guild.get_member(interaction._member_data["user"]["id"])
-            interaction.member = interaction.author
-            if cmd["allowed_roles"]:
-                for role in cmd["allowed_roles"]:
-                    if self.main_guild.get_role(role) in interaction.member.roles:
-                        break
-                else:
-                    return await interaction.channel.send(embed = discord.Embed.from_dict({
-                        "title": ":x: Missing permissions",
-                        "description": "You need 1 of the following roles to use this command: \n{}".format(
-                            ", ".join(list(map(lambda role: "<@&{}>".format(role), cmd["allowed_roles"])))
-                        ),
-                        "color": 0xcc0000
-                    }))
-            interaction.reply = self.main_guild.get_channel(interaction.channel.id).send
-            interaction.send = self.main_guild.get_channel(interaction.channel.id).send
-            interaction.options = list(map(lambda o: o.value, interaction.command.options))
-            interaction.mentions = list(
-                map(
-                    lambda m: self.main_guild.get_member(int(re.match(r".*?(\d+).*", m)[1])),
-                    filter(lambda o: re.match(r"^<@!?(\d+)>$", o), interaction.options)
-                ))
-            await cmd["f"](interaction.options, interaction, self)
+    async def on_interaction(self, interaction: discord.Interaction):
+        interaction = utils.MockInteraction(interaction, self)
+
+        if interaction.type == discord.InteractionType.application_command:
+            cmd_name = interaction.data["name"]
+            if cmd_name in commands and commands[cmd_name]["discord"]:
+                cmd = commands[cmd_name]
+                if cmd["allowed_roles"]:
+                    for role in cmd["allowed_roles"]:
+                        if self.main_guild.get_role(role) in interaction.member.roles:
+                            break
+                    else:
+                        return await interaction.reply(embed = discord.Embed.from_dict({
+                            "title": ":x: Missing permissions",
+                            "description": "You need 1 of the following roles to use this command: \n{}".format(
+                                ", ".join(list(map(lambda role: "<@&{}>".format(role), cmd["allowed_roles"])))
+                            ),
+                            "color": 0xcc0000
+                        }))
+            if cmd["subcommands"]:
+                    return await cmd["subcommands"].__dict__[interaction.options[0]["name"]](interaction.args, interaction, self)
+            await cmd["f"](interaction.args, interaction, self)
 
     async def on_member_join(self, member):
         error = False
@@ -170,7 +180,7 @@ class Discord(discord.Client):
 
         verified_role = self.main_guild.get_role(data["roles"]["verified"])
 
-        if not verified_role in after.roles:
+        if (not verified_role in after.roles) or after.bot:
             return
 
         normalized_nick = utils.get_tfm_nick_format(after.nick) or ""
@@ -192,9 +202,21 @@ class Discord(discord.Client):
         await after.add_roles(rank_role)
 
     async def on_error(self, evt, *args, **kwargs):
+        import traceback
         import sys
-        exe_type, val, traceback = sys.exc_info()
-        await self.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][DISCORD@evt_{evt}]` ```py\n{exe_type.__name__}@{traceback.tb_frame.f_code.co_filename}-{traceback.tb_lineno}: {val}```")
+        
+        e, r, tb = sys.exc_info()
+        
+        import struct
+        import aiotfm
+        ignore_list =  [ struct.error ]
+        if e in ignore_list: return
+        
+        if str(r) == "Cannot send a packet to a closed Connection.":
+            return await commands["restart"]["f"]([], None, self)
+
+        print(f"[ERR][DISCORD@evt_{evt}]\n{traceback.format_exc()}")
+        await self.get_channel(data["channels"]["logs"]).send(f"`[ERR][DISCORD@evt_{evt}]` ```py\n{traceback.format_exc()}```")
 
     async def send_verification_key(self, member):
         key = utils.generate_random_key(member.id)
@@ -227,20 +249,24 @@ class Discord(discord.Client):
         """.format(json.dumps(self.mod_data)))
 
     async def start_period_tasks(self):
-        print("[INFO] Checking for periodic tasks...")
+        print("[INFO][SYSTEM] Checking for periodic tasks...")
         # check qotd
         await commands["qotd"]["f"](["ask"], None, self)
         # other daily tasks
         last_daily_data = await self.data_channel.fetch_message(data["data"]["daily"])
         now = datetime.now()
         if now > datetime.fromtimestamp(float(last_daily_data.content)) + timedelta(days=1):
-            for task in (("bday", []), ("stats", [])):
+            print("[INFO][SYSTEM] Starting daily tasks...")
+            for task in (("bday", []), ):
+                print(f"[INFO][SYSTEM] Starting daily task {task[0].upper()}...")
                 try:
                     await commands[task[0]]["f"](task[1], None, self)
+                    print(f"[INFO][SYSTEM] Daily task {task[0].upper()} finished")
                 except Exception as e:
-                    await self.main_guild.get_channel(data["data"]["channels"]["admin"]).send(
-                        "<@!522972601488900097> [DAILY TASK FAILURE|{}] `{}`\n```\n{}```"
-                        .format(task[0], e, e.with_traceback()))
+                    import traceback
+                    await self.main_guild.get_channel(data["channels"]["logs"]).send(
+                        "**`[DAILY TASK FAILURE|{0}]`** \n```py\n{1}```"
+                        .format(task[0].upper(), traceback.format_exc()))
             await last_daily_data.edit(content=str(now.timestamp()))
         await asyncio.sleep(1 * 60 * 5)
         await self.start_period_tasks()
@@ -252,6 +278,15 @@ class Discord(discord.Client):
             status=discord.Status.online,
             activity=discord.Activity(type = discord.ActivityType.playing, name = "{} / {} online!".format(len(tribe_online.members), len(tribe_total.members)))
         )
+
+    async def start_public_thread(self, name, channel_id, message_id):
+        print(requests.post(DISCORD_ENDPOINT + f"/channels/{channel_id}/messages/{message_id}/threads",
+            json={
+                "name": name,
+                "auto_archive_duration": 60 * 24
+            }, headers={
+                "Authorization": "Bot " + os.getenv("DISCORD")
+        }).content)
 
     def search_member(self, name, deep_check=False):
         if member := self.main_guild.get_member_named(utils.get_discord_nick_format(name)):

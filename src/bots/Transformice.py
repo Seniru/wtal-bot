@@ -55,17 +55,18 @@ class Transformice(aiotfm.Client):
 
 
 	def run(self, block=True):
-
+		print("[INFO][TFM] Starting...")
 		self.loop.run_until_complete(self.start())
 		if block:
 			self.loop.run_forever()
 
 	async def on_login_ready(self, online_players, community, country):
 		print(f"[INFO][TFM] Login Ready [{community}-{country}]")
-		await self.login(self.name, self.password, encrypted=False, room="*#bolodefchoco")
+		await self.login(self.name, self.password, encrypted=False, room="*#castle")
 
 	async def on_logged(self, player_id, username, played_time, community, pid):
 		self.pid = pid
+		print(f"[INFO][TFM] Logged in to the main server as [{community}] {username} ({username})")
 
 	async def on_ready(self):
 		import random
@@ -76,7 +77,8 @@ class Transformice(aiotfm.Client):
 			"Howdy or smth.",
 			"Imagine being a bot in a rat game lol",
 			"Saluton mundo!",
-			"Hello world!"
+			"Hello world!",
+			"ACT A FOOL!!!",
 		]))
 		await self.discord.set_status()
 
@@ -130,6 +132,7 @@ class Transformice(aiotfm.Client):
 			await commands[args[0]]["f"](args[1:], message, self)
 
 	async def on_error(self, evt, e, *args, **kwargs):
+		print(f"[ERR][TFM@evt_{evt}]\n{e}")
 		await self.discord.get_channel(data["channels"]["tribe_chat"]).send(f"<@!522972601488900097> `[ERR][TFM@evt_{evt}]` ```py\n{e}```")
 
 

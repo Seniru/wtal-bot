@@ -1,3 +1,4 @@
+import discord
 import random
 import re
 
@@ -26,8 +27,8 @@ def get_discord_nick_format(name):
 
 
 def get_tfm_nick_format(nick):
-    name, tag = nick[:-7], nick[-4:]
     try:
+        name, tag = nick[:-7], nick[-4:]
         # sorry again
         return "{}#{}{}{}{}".format(name, subscripts.index(tag[0]), subscripts.index(tag[1]), subscripts.index(tag[2]), subscripts.index(tag[3]))
     except Exception:
@@ -67,11 +68,35 @@ def normalize_msg_from_tc(msg, discord):
             if g in ("@here", "@everyone"):
                 return f"@|{ match[3] }"
             else:
-                if member := discord.search_member(match[3], True):
+                print("here" in match[3] or "everyone" in match[3])
+                if "here" in match[3] or "everyone" in match[3]:
+                    return f"@|{ match[3] }"
+                elif member := discord.search_member(match[3], True):
                     return f"<@!{ member.id }>"
         elif mention_type == "<@&":  # role mentions (raw)
             if role := discord.main_guild.get_role(int(match[4])):
                 return f"@{ role.name }"
         return g
-    return re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
-    
+
+    res = re.sub(r"(here|everyone|(@|<@&)((\d+)>|(.+?)#?(\d*)\b))", _helper, replace_entities(msg))
+    return re.sub(r"@here", "@|here", re.sub(r"@everyone", "@|everyone", res))
+
+class MockInteraction(discord.Interaction):
+    def __init__(self, interaction, client):
+        self.interaction = interaction
+        for attr in interaction.__slots__:
+            if attr.startswith("_"):
+                continue
+            self.__setattr__(attr, interaction.__getattribute__(attr))
+        self.author = client.main_guild.get_member(interaction.user.id)
+        self.member = self.author
+        self.reply = interaction.response.send_message
+        self.options = interaction.data.get("options", [])
+        self.content = []
+        if get(self.options, 0, None):
+            for option in self.options if not self.options[0].get("options") else self.options[0]["options"]:
+                if option.get("value") and option["value"]:
+                    self.content.append(str(option["value"]))
+        self.content = " ".join(self.content)
+        # splitting args after joining to avoid having empty string args
+        self.args = self.content.split(" ")

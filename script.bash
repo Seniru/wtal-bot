@@ -1,10 +1,9 @@
-cd discordslashcommands
-pip install -r requirements.txt
-python setup.py install
-cd ..
+#!/bin/bash
+
+bash /wait-for-it.sh "db:3306" --timeout=60
 
 function run() {
-    python src/main.py || run
+    python -u src/main.py || run
 }
 
 run
