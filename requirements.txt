@@ -5,7 +5,7 @@ aiotfm==1.4.8
 async-timeout==4.0.2
 asyncio==3.4.3
 attrs==23.1.0
-certifi==2023.5.7
+certifi==2023.7.22
 discord.py==2.2.3
 docstring-parser==0.15
 frozenlist==1.3.3
